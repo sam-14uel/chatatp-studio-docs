@@ -1,0 +1,42 @@
+---
+title: Authentication
+description: Configure your API key
+---
+
+## Initialize the client
+
+```python
+import os
+from chatatp_studio import ChatATPClient
+
+client = ChatATPClient(api_key=os.environ["CHATATP_API_KEY"])
+```
+
+## Options
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `api_key` | `str` | **required** | Your Developer API key |
+| `base_url` | `str` | ChatATP production URL | Override for self-hosted environments |
+| `timeout` | `float` | `30.0` | Request timeout in seconds |
+| `max_retries` | `int` | `2` | Retry attempts on transient failures |
+| `debug` | `bool` | `False` | Log requests/responses |
+
+## Context manager
+
+```python
+async with ChatATPClient(api_key="chatatp_sk_...") as client:
+    result = await client.chat(
+        agent_id=7,
+        external_user_id="user_12345",
+        message="Hello",
+    )
+```
+
+## Debug logging
+
+```python
+client = ChatATPClient(api_key="chatatp_sk_...", debug=True)
+```
+
+API keys are **never** logged, regardless of the `debug` setting.

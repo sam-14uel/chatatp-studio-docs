@@ -1,0 +1,55 @@
+---
+title: Streaming
+description: Real-time streaming responses from Agents
+---
+
+## Stream a message
+
+```python
+async for event in await client.messages.stream(91, "Do you ship to Lagos?"):
+    match event.type:
+        case "message.created":
+            print("User message stored:", event.data)
+        case "tool.execution.completed":
+            print("Tool ran:", event.data)
+        case "agent.response.completed":
+            print("Agent replied:", event.data["content"])
+        case "completion.completed":
+            print("Stream complete.")
+```
+
+## Use the high-level interface
+
+```python
+async for event in await client.chat_stream(
+    agent_id=7,
+    external_user_id="user_12345",
+    message="Summarize the return policy.",
+):
+    if event.type == "agent.response.completed":
+        print(event.data)
+```
+
+## Event types
+
+| Event | When it fires |
+|---|---|
+| `conversation.message.created` | Stream accepted, user message creation has started |
+| `message.created` | User message stored successfully |
+| `tool.execution.completed` | A tool call completed |
+| `agent.response.completed` | Final agent message stored |
+| `completion.completed` | Stream is fully complete |
+
+## Error handling during streaming
+
+```python
+from chatatp_studio import NetworkError, TimeoutError
+
+try:
+    async for event in await client.messages.stream(91, "Hello"):
+        pass
+except TimeoutError:
+    print("Stream timed out")
+except NetworkError as e:
+    print("Connection dropped:", e)
+```

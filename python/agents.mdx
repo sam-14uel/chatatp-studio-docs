@@ -1,0 +1,40 @@
+---
+title: Agents
+description: List and retrieve Agents
+---
+
+## List agents
+
+```python
+page = await client.agents.list()
+
+for agent in page:
+    print(agent.id, agent.name, agent.status)
+
+# Or as a plain list
+agents = list(page)
+```
+
+## Retrieve an agent
+
+```python
+agent = await client.agents.retrieve(7)
+
+print(agent.name)
+print(agent.capabilities.streaming)  # True / False
+```
+
+## Agent model
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `int` | Agent ID |
+| `name` | `str` | Display name |
+| `description` | `str` | Short description |
+| `status` | `str` | `"active"` or `"inactive"` |
+| `avatar_url` | `str` | Avatar image URL |
+| `capabilities.persistent_conversations` | `bool` | Supports persistent conversations |
+| `capabilities.streaming` | `bool` | Supports streaming responses |
+| `capabilities.tool_activity` | `bool` | Can execute tools |
+| `created_at` | `str` | ISO 8601 timestamp |
+| `updated_at` | `str` | ISO 8601 timestamp |

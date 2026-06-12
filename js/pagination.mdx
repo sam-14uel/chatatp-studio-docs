@@ -1,0 +1,31 @@
+---
+title: Pagination
+description: Iterating over collections
+---
+
+List methods return a `PageIterator<T>` that wraps the results and lets you iterate naturally.
+
+## Iterate with for-await
+
+```typescript
+const page = await client.agents.list();
+
+for await (const agent of page) {
+  console.log(agent.name);
+}
+```
+
+## Collect to an array
+
+```typescript
+const page = await client.agents.list();
+const agents = await page.toArray();
+```
+
+## Access the raw data
+
+```typescript
+const page = await client.agents.list();
+console.log(page.data.length);
+console.log(page.data[0]);
+```

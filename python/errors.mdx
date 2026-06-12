@@ -1,0 +1,66 @@
+---
+title: Error Handling
+description: Handling errors from the ChatATP Studio SDK
+---
+
+## Exception hierarchy
+
+All SDK errors extend `ChatATPError`, which carries:
+
+- `status_code` — the HTTP status code (if applicable)
+- `args[0]` — a human-readable message
+- `payload` — the raw API response body
+- `request_id` — the server request ID (when available)
+
+```
+ChatATPError
+├── AuthenticationError   (401)
+├── PermissionError       (403)
+├── ValidationError       (400)
+├── RateLimitError        (429)
+├── NotFoundError         (404)
+├── ServerError           (5xx)
+└── NetworkError
+    └── TimeoutError
+```
+
+## Handling errors
+
+```python
+from chatatp_studio import (
+    ChatATPClient,
+    AuthenticationError,
+    NotFoundError,
+    RateLimitError,
+    ValidationError,
+    ServerError,
+    NetworkError,
+)
+
+client = ChatATPClient(api_key="chatatp_sk_...")
+
+try:
+    agent = await client.agents.retrieve(999)
+except AuthenticationError:
+    print("Check your API key.")
+except NotFoundError:
+    print("Agent not found.")
+except RateLimitError:
+    print("Slow down — you've hit the rate limit.")
+except ValidationError as e:
+    print("Bad request:", e.payload)
+except ServerError:
+    print("ChatATP server error, try again shortly.")
+except NetworkError as e:
+    print("Network failure:", e)
+```
+
+## Retries
+
+The SDK retries automatically on transient failures with exponential backoff. The default is **2 retries**. Adjust via:
+
+```python
+client = ChatATPClient(api_key="chatatp_sk_...", max_retries=3)
+```
+
+Set `max_retries=0` to disable retries entirely.

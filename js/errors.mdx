@@ -1,0 +1,74 @@
+---
+title: Error Handling
+description: Handling errors from the ChatATP Studio SDK
+---
+
+## Exception hierarchy
+
+All SDK errors extend `ChatATPError`, which carries:
+
+- `statusCode` — the HTTP status code (if applicable)
+- `message` — a human-readable description
+- `payload` — the raw API response body
+- `requestId` — the server request ID (when available)
+
+```
+ChatATPError
+├── AuthenticationError   (401)
+├── PermissionError       (403)
+├── ValidationError       (400)
+├── RateLimitError        (429)
+├── NotFoundError         (404)
+├── ServerError           (5xx)
+└── NetworkError
+    └── TimeoutError
+```
+
+## Handling errors
+
+```typescript
+import {
+  ChatATPClient,
+  AuthenticationError,
+  NotFoundError,
+  RateLimitError,
+  ValidationError,
+  ServerError,
+  NetworkError,
+} from "@chatatp/studio";
+
+const client = new ChatATPClient({ apiKey: "chatatp_sk_..." });
+
+try {
+  const agent = await client.agents.retrieve(999);
+} catch (err) {
+  if (err instanceof AuthenticationError) {
+    console.error("Check your API key.");
+  } else if (err instanceof NotFoundError) {
+    console.error("Agent not found.");
+  } else if (err instanceof RateLimitError) {
+    console.error("Slow down — you've hit the rate limit.");
+  } else if (err instanceof ValidationError) {
+    console.error("Bad request:", err.payload);
+  } else if (err instanceof ServerError) {
+    console.error("ChatATP server error, try again shortly.");
+  } else if (err instanceof NetworkError) {
+    console.error("Network failure:", err.message);
+  } else {
+    throw err;
+  }
+}
+```
+
+## Retries
+
+The SDK automatically retries requests on transient failures (network errors, 500, 502, 503, 504, and 429) with exponential backoff. The default is **2 retries**. You can adjust this:
+
+```typescript
+const client = new ChatATPClient({
+  apiKey: "chatatp_sk_...",
+  maxRetries: 3,
+});
+```
+
+Set `maxRetries: 0` to disable retries entirely.

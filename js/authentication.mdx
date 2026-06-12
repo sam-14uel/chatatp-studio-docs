@@ -1,0 +1,44 @@
+---
+title: Authentication
+description: Configure your API key
+---
+
+## Initialize the client
+
+```typescript
+import { ChatATPClient } from "@chatatp/studio";
+
+const client = new ChatATPClient({
+  apiKey: process.env.CHATATP_API_KEY!,
+});
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `apiKey` | `string` | **required** | Your Developer API key |
+| `baseUrl` | `string` | ChatATP production URL | Override for self-hosted environments |
+| `timeout` | `number` | `30000` | Request timeout in milliseconds |
+| `maxRetries` | `number` | `2` | Retry attempts on transient failures |
+| `debug` | `boolean` | `false` | Log requests/responses to console |
+
+## Debug logging
+
+```typescript
+const client = new ChatATPClient({
+  apiKey: process.env.CHATATP_API_KEY!,
+  debug: true, // logs to console.debug
+});
+```
+
+API keys are **never** logged, regardless of the `debug` setting.
+
+## Custom base URL
+
+```typescript
+const client = new ChatATPClient({
+  apiKey: "chatatp_sk_...",
+  baseUrl: "https://your-self-hosted-instance.example.com",
+});
+```

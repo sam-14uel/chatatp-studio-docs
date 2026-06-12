@@ -1,0 +1,100 @@
+---
+title: Quickstart
+description: Get up and running in under five minutes
+---
+
+## 1. Install
+
+<CodeGroup>
+
+```bash npm
+npm install @chatatp/studio
+```
+
+```bash pip
+pip install chatatp-studio
+```
+
+</CodeGroup>
+
+## 2. Initialize the client
+
+<CodeGroup>
+
+```typescript TypeScript
+import { ChatATPClient } from "@chatatp/studio";
+
+const client = new ChatATPClient({ apiKey: "chatatp_sk_..." });
+```
+
+```python Python
+from chatatp_studio import ChatATPClient
+
+client = ChatATPClient(api_key="chatatp_sk_...")
+```
+
+</CodeGroup>
+
+## 3. Send your first message
+
+<CodeGroup>
+
+```typescript TypeScript
+const result = await client.chat({
+  agent_id: 7,
+  external_user_id: "user_12345",
+  message: "Do you ship to Lagos?",
+});
+
+console.log(result.agent_message.content);
+// → "Yes, shipping is available."
+```
+
+```python Python
+result = await client.chat(
+    agent_id=7,
+    external_user_id="user_12345",
+    message="Do you ship to Lagos?",
+)
+
+print(result.agent_message.content)
+# → "Yes, shipping is available."
+```
+
+</CodeGroup>
+
+The `chat()` method handles conversation creation automatically. You only need the agent ID, a user identifier, and the message — the SDK takes care of the rest.
+
+## 4. Stream a response
+
+<CodeGroup>
+
+```typescript TypeScript
+for await (const event of client.chatStream({
+  agent_id: 7,
+  external_user_id: "user_12345",
+  message: "Give me a summary of your return policy.",
+})) {
+  if (event.type === "agent.response.completed") {
+    console.log(event.data);
+  }
+}
+```
+
+```python Python
+async for event in await client.chat_stream(
+    agent_id=7,
+    external_user_id="user_12345",
+    message="Give me a summary of your return policy.",
+):
+    if event.type == "agent.response.completed":
+        print(event.data)
+```
+
+</CodeGroup>
+
+## Next steps
+
+- Learn about [Agents](/js/agents)
+- Manage [Conversations](/js/conversations)
+- Handle [Errors](/js/errors)

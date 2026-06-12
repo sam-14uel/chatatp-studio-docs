@@ -1,0 +1,41 @@
+---
+title: Agents
+description: List and retrieve Agents
+---
+
+## List agents
+
+```typescript
+const page = await client.agents.list();
+
+for await (const agent of page) {
+  console.log(agent.id, agent.name, agent.status);
+}
+
+// Or collect to array
+const agents = await page.toArray();
+```
+
+## Retrieve an agent
+
+```typescript
+const agent = await client.agents.retrieve(7);
+
+console.log(agent.name);
+console.log(agent.capabilities.streaming); // true/false
+```
+
+## Agent model
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `number` | Agent ID |
+| `name` | `string` | Display name |
+| `description` | `string` | Short description |
+| `status` | `string` | `"active"` or `"inactive"` |
+| `avatar_url` | `string` | Avatar image URL |
+| `capabilities.persistent_conversations` | `boolean` | Supports persistent conversations |
+| `capabilities.streaming` | `boolean` | Supports streaming responses |
+| `capabilities.tool_activity` | `boolean` | Can execute tools |
+| `created_at` | `string` | ISO 8601 timestamp |
+| `updated_at` | `string` | ISO 8601 timestamp |

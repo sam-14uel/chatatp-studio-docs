@@ -1,0 +1,44 @@
+---
+title: Conversations
+description: Create, retrieve, list, and delete conversations
+---
+
+## Create or upsert a conversation
+
+```python
+conversation = await client.conversations.create(
+    agent_id=7,
+    external_user_id="user_12345",
+    user_display_name="Jane Customer",  # optional
+    metadata={"plan": "pro"},           # optional
+)
+
+print(conversation.id)  # 91
+```
+
+## Retrieve a conversation
+
+```python
+conversation = await client.conversations.retrieve(91)
+print(conversation.message_count)
+```
+
+## List conversations
+
+```python
+# Filter by agent
+page = await client.conversations.list(agent_id=7)
+
+# Filter by user
+page = await client.conversations.list(external_user_id="user_12345")
+
+for conv in page:
+    print(conv.id, conv.external_user_id)
+```
+
+## Delete a conversation
+
+```python
+await client.conversations.delete(91)
+# Returns None. The conversation is permanently deleted.
+```

@@ -1,0 +1,36 @@
+---
+title: Messages
+description: Send messages and retrieve conversation history
+---
+
+## Send a message
+
+```python
+result = await client.messages.send(
+    conversation_id=91,
+    content="Do you ship to Lagos?",
+    metadata={"client_message_id": "msg_abc123"},  # optional
+)
+
+print(result.user_message.content)   # "Do you ship to Lagos?"
+print(result.agent_message.content)  # "Yes, shipping is available."
+```
+
+## Retrieve conversation history
+
+```python
+page = await client.messages.list(91)
+
+for message in page:
+    print(f"[{message.sender}] {message.content}")
+```
+
+## High-level shortcut
+
+```python
+result = await client.chat(
+    agent_id=7,
+    external_user_id="user_12345",
+    message="Do you ship to Lagos?",
+)
+```

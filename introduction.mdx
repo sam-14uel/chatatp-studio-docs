@@ -1,0 +1,40 @@
+---
+title: Introduction
+description: Official SDKs for the ChatATP Studio Developer API
+---
+
+# ChatATP Studio SDKs
+
+The ChatATP Studio SDKs let you integrate your application with ChatATP Agents from JavaScript/TypeScript or Python. They provide a clean, developer-friendly interface over the [Developer API](https://chatatp-agent-builder-backend.onrender.com).
+
+## What you can do
+
+- **Send messages** to any Agent you've built in ChatATP Studio.
+- **Stream responses** in real time.
+- **Manage conversations** — create, retrieve, list, and delete.
+- **Inspect usage** for your API key.
+
+## How to think about it
+
+The SDKs model the world in four concepts:
+
+| Concept | What it is |
+|---|---|
+| **Agent** | An AI assistant you configured in ChatATP Studio |
+| **User** | The end user in your application, identified by `external_user_id` |
+| **Conversation** | A persistent thread between a user and an agent |
+| **Message** | A single exchange within a conversation |
+
+## Base URL
+
+```
+https://chatatp-agent-builder-backend.onrender.com
+```
+
+## Authentication
+
+All API requests require a Developer API key issued from the ChatATP Studio dashboard.
+
+```
+Authorization: Bearer chatatp_sk_...
+```

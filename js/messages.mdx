@@ -1,0 +1,49 @@
+---
+title: Messages
+description: Send messages and retrieve conversation history
+---
+
+## Send a message
+
+```typescript
+const result = await client.messages.send(91, {
+  content: "Do you ship to Lagos?",
+  metadata: { client_message_id: "msg_abc123" }, // optional
+});
+
+console.log(result.user_message.content);  // "Do you ship to Lagos?"
+console.log(result.agent_message.content); // "Yes, shipping is available."
+```
+
+## Retrieve conversation history
+
+```typescript
+const page = await client.messages.list(91);
+
+for await (const message of page) {
+  console.log(`[${message.sender}] ${message.content}`);
+}
+```
+
+## High-level shortcut
+
+For most use cases, use `client.chat()` which handles conversation creation automatically:
+
+```typescript
+const result = await client.chat({
+  agent_id: 7,
+  external_user_id: "user_12345",
+  message: "Do you ship to Lagos?",
+});
+```
+
+## Message model
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `number` | Message ID |
+| `sender` | `"user" \| "agent"` | Who sent the message |
+| `content` | `string` | Message text |
+| `tool_calls` | `array` | Tool calls made by the agent |
+| `metadata` | `object` | Key-value metadata |
+| `timestamp` | `string` | ISO 8601 timestamp |

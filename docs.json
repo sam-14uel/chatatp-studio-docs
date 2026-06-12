@@ -1,0 +1,117 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "ChatATP Studio Documentation",
+  "colors": {
+    "primary": "#6366F1",
+    "light": "#818CF8",
+    "dark": "#4338CA"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "JavaScript SDK",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "js/installation",
+              "js/authentication"
+            ]
+          },
+          {
+            "group": "Agents",
+            "pages": [
+              "js/agents",
+              "js/conversations",
+              "js/messages",
+              "js/streaming",
+              "js/pagination",
+              "js/errors"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Python SDK",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "python/installation",
+              "python/authentication"
+            ]
+          },
+          {
+            "group": "Agents",
+            "pages": [
+              "python/agents",
+              "python/conversations",
+              "python/messages",
+              "python/streaming",
+              "python/pagination",
+              "python/errors"
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Dashboard",
+          "href": "https://studio.chat-atp.com/dashboard"
+        },
+        {
+          "anchor": "Support",
+          "href": "mailto:support@chat-atp.com"
+        }
+      ]
+    }
+  },
+  "navbar": {
+    "primary": {
+      "type": "button",
+      "label": "Open Dashboard",
+      "href": "https://studio.chat-atp.com/dashboard"
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/chatatpai",
+      "instagram": "https://instagram.com/chatatpai",
+      "threads": "https://www.threads.net/@chatatpai",
+      "github": "https://github.com/Chat-ATP/",
+      "linkedin": "https://linkedin.com/company/chatatp"
+    }
+  }
+}

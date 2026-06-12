@@ -1,0 +1,61 @@
+---
+title: Conversations
+description: Create, retrieve, list, and delete conversations
+---
+
+## Create or upsert a conversation
+
+If a conversation already exists for the `agent_id` + `external_user_id` pair, the API returns the existing one rather than creating a duplicate.
+
+```typescript
+const conversation = await client.conversations.create({
+  agent_id: 7,
+  external_user_id: "user_12345",
+  user_display_name: "Jane Customer",   // optional
+  metadata: { plan: "pro" },            // optional
+});
+
+console.log(conversation.id); // 91
+```
+
+## Retrieve a conversation
+
+```typescript
+const conversation = await client.conversations.retrieve(91);
+console.log(conversation.message_count);
+```
+
+## List conversations
+
+```typescript
+// All conversations for an agent
+const page = await client.conversations.list({ agent_id: 7 });
+
+// All conversations for a specific user
+const page = await client.conversations.list({ external_user_id: "user_12345" });
+
+for await (const conv of page) {
+  console.log(conv.id, conv.external_user_id);
+}
+```
+
+## Delete a conversation
+
+```typescript
+await client.conversations.delete(91);
+// Returns void. The conversation is permanently deleted.
+```
+
+## Conversation model
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `number` | Conversation ID |
+| `agent` | `Agent` | The associated agent |
+| `external_user_id` | `string` | Your user identifier |
+| `user_display_name` | `string \| null` | Display name |
+| `metadata` | `object` | Key-value metadata |
+| `message_count` | `number` | Total messages exchanged |
+| `last_message_at` | `string \| null` | ISO 8601 timestamp |
+| `created_at` | `string` | ISO 8601 timestamp |
+| `updated_at` | `string` | ISO 8601 timestamp |

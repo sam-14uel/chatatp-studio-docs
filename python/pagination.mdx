@@ -1,0 +1,37 @@
+---
+title: Pagination
+description: Iterating over collections
+---
+
+List methods return a `Page[T]` object that supports standard Python iteration.
+
+## Iterate with for
+
+```python
+page = await client.agents.list()
+
+for agent in page:
+    print(agent.name)
+```
+
+## Convert to list
+
+```python
+page = await client.agents.list()
+agents = list(page)
+```
+
+## Access by index
+
+```python
+page = await client.agents.list()
+first = page[0]
+count = len(page)
+```
+
+## Access raw data
+
+```python
+page = await client.agents.list()
+print(page.data)  # list[Agent]
+```

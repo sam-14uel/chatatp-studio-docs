@@ -1,75 +1,84 @@
 ---
-title: Streaming
-description: Real-time streaming responses from Agents
+title: "Event Streaming (SSE)"
+description: "Handle real-time autonomous agent events"
 ---
 
-## Overview
+ChatATP uses Server-Sent Events (SSE) to stream real-time updates as agents process messages, execute tools, and generate responses.
 
-Agents that have `capabilities.streaming: true` support streaming responses via Server-Sent Events. The SDK wraps this into a developer-friendly async iterator.
+## SDK Developer Scenarios: Event Streams
 
-## Stream a message
+The ChatATP SDK handles parsing the underlying HTTP stream. Here are the core scenarios you should handle when reading events from the `chatStream` method.
+
+### Scenario 1: Basic Text Response
+When a user asks a simple question and the agent responds without needing tools.
 
 ```typescript
-for await (const event of client.messages.stream(91, { content: "Hello" })) {
+for await (const event of client.chatStream({ ... })) {
   switch (event.type) {
-    case "message.created":
-      console.log("User message stored:", event.data);
+    case "conversation.message.created":
+      // Initial acknowledgment
       break;
-    case "tool.execution.completed":
-      console.log("Tool ran:", event.data);
+    case "message.created":
+      // User message saved
+      break;
+    case "agent.response.delta":
+      // Incremental text chunks from the LLM
+      process.stdout.write(event.data.delta);
       break;
     case "agent.response.completed":
-      console.log("Agent replied:", (event.data as any).content);
-      break;
-    case "completion.completed":
-      console.log("Stream complete.");
+      // Finalization of the agent's full response
+      console.log("\nFinished text:", event.data.content);
       break;
   }
 }
 ```
 
-## Use the high-level interface
+### Scenario 2: Autonomous Tool Execution
+When the agent decides to invoke an internal tool during its response cycle.
 
 ```typescript
-for await (const event of client.chatStream({
-  agent_id: 7,
-  external_user_id: "user_12345",
-  message: "Summarize the return policy.",
-})) {
-  if (event.type === "agent.response.completed") {
-    console.log(event.data);
+for await (const event of client.chatStream({ ... })) {
+  switch (event.type) {
+    case "tool.execution.started":
+      // 1. The agent decides to call a tool
+      console.log(`Running tool: ${event.data.name}`, event.data.arguments);
+      break;
+    case "tool.execution.completed":
+      // 2. The backend executes the tool and streams back the result
+      console.log(`Tool ${event.data.name} completed. OK: ${event.data.ok}`);
+      console.log(`Result: ${event.data.result}`);
+      break;
+    case "agent.response.delta":
+      // 3. The agent reasons about the tool response and streams text
+      process.stdout.write(event.data.delta);
+      break;
+    case "agent.response.completed":
+      // 4. Final completion payload with full metadata
+      console.log("Response complete. Tools used:", event.data.tool_calls);
+      break;
   }
 }
 ```
 
-## Event types
-
-| Event | When it fires |
-|---|---|
-| `conversation.message.created` | Stream accepted, user message creation has started |
-| `message.created` | User message stored successfully |
-| `tool.execution.completed` | A tool call completed and is visible to your app |
-| `agent.response.completed` | The final Agent message was stored |
-| `completion.completed` | Stream is fully complete |
-
-## Error handling during streaming
-
-The SDK surfaces stream errors as standard SDK exceptions:
+### Scenario 3: Error Encountered
+When something goes wrong in the backend or tool execution fails.
 
 ```typescript
-import { NetworkError, TimeoutError } from "@chatatp/studio";
-
-try {
-  for await (const event of client.messages.stream(91, { content: "Hello" })) {
-    // handle events
-  }
-} catch (err) {
-  if (err instanceof TimeoutError) {
-    console.error("Stream timed out:", err.message);
-  } else if (err instanceof NetworkError) {
-    console.error("Connection dropped:", err.message);
-  } else {
-    throw err;
+for await (const event of client.chatStream({ ... })) {
+  switch (event.type) {
+    case "tool.execution.completed":
+      if (!event.data.ok) {
+        console.error(`Tool failed: ${event.data.result}`);
+      }
+      break;
+    case "error":
+      // If the LLM integration completely drops or a critical pipeline error occurs
+      console.error(`Critical Error: ${event.data.message}`);
+      break;
   }
 }
 ```
+
+### SDK Integration Tips:
+1. **State Management**: Keep an array/dictionary in memory keyed by `tool_call_id`. When `tool.execution.started` arrives, push the placeholder. When `tool.execution.completed` arrives, update the matching placeholder with the `result` string.
+2. **Text Accumulation**: Simply concatenate the strings from `agent.response.delta` sequentially to render typewriter effects.

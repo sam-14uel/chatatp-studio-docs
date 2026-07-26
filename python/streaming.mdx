@@ -1,55 +1,68 @@
 ---
-title: Streaming
-description: Real-time streaming responses from Agents
+title: "Event Streaming (SSE)"
+description: "Handle real-time autonomous agent events"
 ---
 
-## Stream a message
+ChatATP uses Server-Sent Events (SSE) to stream real-time updates as agents process messages, execute tools, and generate responses.
+
+## SDK Developer Scenarios: Event Streams
+
+The ChatATP SDK handles parsing the underlying HTTP stream. Here are the core scenarios you should handle when reading events from the `chat_stream` method.
+
+### Scenario 1: Basic Text Response
+When a user asks a simple question and the agent responds without needing tools.
 
 ```python
-async for event in await client.messages.stream(91, "Do you ship to Lagos?"):
-    match event.type:
-        case "message.created":
-            print("User message stored:", event.data)
-        case "tool.execution.completed":
-            print("Tool ran:", event.data)
-        case "agent.response.completed":
-            print("Agent replied:", event.data["content"])
-        case "completion.completed":
-            print("Stream complete.")
+import sys
+
+async for event in await client.chat_stream(agent_id=7, ...):
+    if event.type == "conversation.message.created":
+        pass # Initial acknowledgment
+    elif event.type == "message.created":
+        pass # User message saved
+    elif event.type == "agent.response.delta":
+        # Incremental text chunks from the LLM
+        sys.stdout.write(event.data.get("delta", ""))
+        sys.stdout.flush()
+    elif event.type == "agent.response.completed":
+        # Finalization of the agent's full response
+        print(f"\nFinished text: {event.data.get('content')}")
 ```
 
-## Use the high-level interface
+### Scenario 2: Autonomous Tool Execution
+When the agent decides to invoke an internal tool during its response cycle.
 
 ```python
-async for event in await client.chat_stream(
-    agent_id=7,
-    external_user_id="user_12345",
-    message="Summarize the return policy.",
-):
-    if event.type == "agent.response.completed":
-        print(event.data)
+async for event in await client.chat_stream(agent_id=7, ...):
+    if event.type == "tool.execution.started":
+        # 1. The agent decides to call a tool
+        print(f"Running tool: {event.data.get('name')}", event.data.get("arguments"))
+    elif event.type == "tool.execution.completed":
+        # 2. The backend executes the tool and streams back the result
+        print(f"Tool {event.data.get('name')} completed. OK: {event.data.get('ok')}")
+        print(f"Result: {event.data.get('result')}")
+    elif event.type == "agent.response.delta":
+        # 3. The agent reasons about the tool response and streams text
+        sys.stdout.write(event.data.get("delta", ""))
+        sys.stdout.flush()
+    elif event.type == "agent.response.completed":
+        # 4. Final completion payload with full metadata
+        print("\nResponse complete. Tools used:", event.data.get("tool_calls"))
 ```
 
-## Event types
-
-| Event | When it fires |
-|---|---|
-| `conversation.message.created` | Stream accepted, user message creation has started |
-| `message.created` | User message stored successfully |
-| `tool.execution.completed` | A tool call completed |
-| `agent.response.completed` | Final agent message stored |
-| `completion.completed` | Stream is fully complete |
-
-## Error handling during streaming
+### Scenario 3: Error Encountered
+When something goes wrong in the backend or tool execution fails.
 
 ```python
-from chatatp_studio import NetworkError, TimeoutError
-
-try:
-    async for event in await client.messages.stream(91, "Hello"):
-        pass
-except TimeoutError:
-    print("Stream timed out")
-except NetworkError as e:
-    print("Connection dropped:", e)
+async for event in await client.chat_stream(agent_id=7, ...):
+    if event.type == "tool.execution.completed":
+        if not event.data.get("ok"):
+            print(f"Tool failed: {event.data.get('result')}")
+    elif event.type == "error":
+        # If the LLM integration completely drops or a critical pipeline error occurs
+        print(f"Critical Error: {event.data.get('message')}")
 ```
+
+### SDK Integration Tips:
+1. **State Management**: Keep a dictionary in memory keyed by `tool_call_id`. When `tool.execution.started` arrives, push the placeholder. When `tool.execution.completed` arrives, update the matching placeholder with the `result` string.
+2. **Text Accumulation**: Simply concatenate the strings from `agent.response.delta` sequentially to render typewriter effects.

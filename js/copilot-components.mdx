@@ -1,0 +1,97 @@
+---
+title: "Copilot UI Components"
+description: "Embed the full ChatATP Copilot directly into your web applications"
+---
+
+The `@chatatp/studio` SDK goes beyond a simple HTTP wrapper—it provides fully managed, plug-and-play UI components to embed the ChatATP Copilot directly into your web applications.
+
+The components handle the complete conversational lifecycle, streaming state, markdown rendering, tool execution, and rich animations out of the box, allowing you to focus on your app's core features.
+
+We support multiple frameworks via dedicated subpath exports.
+
+## Available Wrappers
+
+### React
+
+The `/react` subpath provides a native React component.
+
+```tsx
+import { Copilot } from "@chatatp/studio/react";
+
+function App() {
+  return (
+    <div>
+      <header>
+        {/* Place the button anywhere in your app */}
+        <Copilot 
+          apiKey="YOUR_API_KEY"
+          agentId={7}
+          userId="user_123"
+          userDisplayName="John Doe"
+          mode="sidebar" 
+          position="right"
+          themePrimary="#0ea5e9"
+          themeSecondary="#6366f1"
+        />
+      </header>
+    </div>
+  );
+}
+```
+
+### Vue
+
+The `/vue` subpath provides a native Vue component.
+
+```vue
+<script setup>
+import { Copilot } from '@chatatp/studio/vue';
+</script>
+
+<template>
+  <Copilot 
+    apiKey="YOUR_API_KEY"
+    agentId="7"
+    mode="popup"
+    position="right"
+  />
+</template>
+```
+
+### Angular
+
+Import `CopilotDirective` from `@chatatp/studio/angular` and use it on an element or as a standalone component.
+
+### Vanilla Web Components
+
+You can also use the core Web Components directly in vanilla HTML or any other framework that supports Custom Elements.
+
+```html
+<script type="module">
+  import '@chatatp/studio/web';
+</script>
+
+<chatatp-copilot-button
+  apiKey="YOUR_API_KEY"
+  agentId="7"
+  mode="fullscreen"
+></chatatp-copilot-button>
+```
+
+## Customization Options
+
+All wrappers expose the following properties for customization:
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `apiKey` | string | **Required** | Your ChatATP API Key |
+| `agentId`| string/number | **Required** | The ID of the agent to connect to |
+| `userId` | string | `'anonymous'` | External ID for tracking users |
+| `userDisplayName`| string | `'User'` | Display name shown in chats |
+| `mode` | `'popup' \| 'sidebar' \| 'fullscreen'` | `'popup'` | The layout style of the opened chat window |
+| `position` | `'left' \| 'right'` | `'right'` | Which side the chat window aligns to |
+| `themePrimary` | string | `'#0ea5e9'` | Primary accent color (hex, rgb, etc.) |
+| `themeSecondary` | string | `'#6366f1'` | Secondary accent color for gradients |
+| `avatarSrc` | string | `''` | Optional URL to a custom avatar image |
+| `baseUrl` | string | `'http://localhost:8000'` | Override the API base URL |
+| `placeholder` | string | `'Ask me anything...'` | Placeholder text for button |

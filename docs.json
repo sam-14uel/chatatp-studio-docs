@@ -37,6 +37,12 @@
             ]
           },
           {
+            "group": "Copilot Components",
+            "pages": [
+              "js/copilot-components"
+            ]
+          },
+          {
             "group": "Agents",
             "pages": [
               "js/agents",

@@ -101,8 +101,8 @@ All wrappers expose the following properties for customization:
 | `userDisplayName`| string | `'User'` | Display name shown in chats |
 | `mode` | `'popup' \| 'sidebar' \| 'fullscreen'` | `'popup'` | The layout style of the opened chat window |
 | `position` | `'left' \| 'right'` | `'right'` | Which side the chat window aligns to |
-| `themePrimary` | string | `'#0ea5e9'` | Primary action/doodle color; accepts hex, rgb, or common color names |
-| `themeSecondary` | string | `'#6366f1'` | Secondary surface/background color for panels, containers, and soft fills |
+| `themePrimary` | string | `'#0ea5e9'` | Primary action/doodle color for avatar, user bubbles, send button, focus states; accepts hex, rgb, or common color names |
+| `themeSecondary` | string | `'#6366f1'` | Secondary surface/background color for panels, containers, assistant bubbles, launcher shell, and soft fills |
 | `avatarSrc` | string | `''` | Optional URL to a custom avatar image |
 | `baseUrl` | string | `'http://localhost:8000'` | Override the API base URL |
 | `placeholder` | string | `''` | Launcher pill text beside the copilot button |
@@ -117,10 +117,35 @@ All wrappers expose the following properties for customization:
 
 ### Layout behavior
 
-- The launcher is visible for `popup`, `sidebar`, and `fullscreen`; clicking it opens the configured mode.
+- The launcher is visible for `popup`, `sidebar`, and routed `fullscreen`; clicking it opens the configured mode or navigates to `fullscreenUrl`.
 - `popup` renders as a floating corner overlay above the current page, like a normal chatbot widget.
 - `sidebar` opens as a fixed side panel and shifts `sidebarTarget` with padding instead of covering the main app. Closing or switching away removes that padding.
-- `fullscreen` navigates to `fullscreenUrl` when provided; without it, it renders as an embedded full-size panel.
+- `fullscreen` navigates to `fullscreenUrl` when provided; on the dedicated route, omit `fullscreenUrl` to render the full-page copilot screen.
+
+### Fullscreen route component
+
+Use the floating widget with `fullscreenUrl` on normal pages, then register a dedicated route that renders the same Copilot in `fullscreen` mode without `fullscreenUrl`:
+
+```tsx
+// App shell
+<Copilot
+  apiKey="YOUR_API_KEY"
+  agentId={7}
+  mode="popup"
+  fullscreenUrl="/copilot"
+/>
+
+// /copilot route
+<Copilot
+  apiKey="YOUR_API_KEY"
+  agentId={7}
+  mode="fullscreen"
+  themePrimary="blue"
+  themeSecondary="orange"
+/>
+```
+
+Fullscreen mode renders a full-page ChatGPT-style screen with an expandable/collapsible conversation sidebar.
 
 ### React icon quick actions
 

@@ -93,8 +93,27 @@ async for event in await client.chat_stream(
 
 </CodeGroup>
 
+## CLI quickstart
+
+The Studio CLI exposes the same workflows from the terminal.
+
+```bash
+pip install -e cli/python
+studio auth login --email person@example.com --password secret123
+studio agents list
+studio assistant chat --message "Create an agent for support"
+```
+
+```bash
+cd cli/javascript
+npm install
+node ./src/main.js auth login --email person@example.com --password secret123
+node ./src/main.js agents list
+```
+
 ## Next steps
 
 - Learn about [Agents](/js/agents)
 - Manage [Conversations](/js/conversations)
 - Handle [Errors](/js/errors)
+- Explore the [Studio CLI](/cli/overview)

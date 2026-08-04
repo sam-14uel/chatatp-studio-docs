@@ -1,0 +1,763 @@
+---
+title: Studio CLI
+description: Official command-line workflows for ChatATP Studio
+---
+
+# ChatATP Studio CLI
+
+A command-line interface for the **ChatATP Studio** API — build, configure,
+and deploy AI agents; manage MCP servers, HTTP API tools, LLM providers,
+knowledge bases, messaging platforms, teams, and the AI Copilot assistant,
+all from your terminal.
+
+This repository ships **two standalone, functionally-identical reference
+implementations** of the same CLI:
+
+| Implementation | Location       | Package               |
+|-----------------|----------------|------------------------|
+| Python          | [`python/`](./python)   | `studio-cli` (importable as `studio_cli`) |
+| JavaScript/TypeScript | [`javascript/`](./javascript) | `@chatatp/studio-cli` |
+
+Both expose the **same executable name, `studio`**, the **same command
+structure**, the **same flags**, and the **same output**. They are built as
+independent projects — neither depends on the other, and neither depends on
+the official `chatatp-studio` / `@chatatp/studio` SDKs — so that either one
+can be developed, tested, and versioned on its own, and later folded into
+the corresponding SDK repository (see
+[Integrating into the official SDKs](#integrating-into-the-official-sdks)).
+
+> **Executable name:** `studio`. Not `chatatp` — that name is reserved for
+> the separate ChatATP Agent CLI.
+
+---
+
+## Table of contents
+
+- [Project overview](#project-overview)
+- [Installation (Python)](#installation-python)
+- [Installation (JavaScript/Node.js)](#installation-javascriptnodejs)
+- [The `studio` executable](#the-studio-executable)
+- [Authentication](#authentication)
+- [Configuration](#configuration)
+- [Command reference](#command-reference)
+- [Usage examples](#usage-examples)
+- [Common workflows](#common-workflows)
+- [Development setup](#development-setup)
+- [Project structure](#project-structure)
+- [Integrating into the official SDKs](#integrating-into-the-official-sdks)
+- [A note on endpoint inference](#a-note-on-endpoint-inference)
+
+---
+
+## Project overview
+
+ChatATP Studio is a SaaS platform for creating, configuring, and deploying
+AI agents across messaging channels. Its backend exposes a REST API (base
+path `/dapi/`) covering:
+
+- **Agents** — the AI agents you build (system prompt, tone, LLM
+  configuration, attached tools, attached knowledge bases, preview chat).
+- **Assistant (AI Copilot)** — a chat assistant that helps you build and
+  operate Studio itself, with sessions, streaming replies, event history,
+  and analytics.
+- **MCP** — Model Context Protocol servers and per-user/team connections.
+- **HTTP API tools** — arbitrary HTTP-based tools you can attach to agents.
+- **LLM providers** — provider catalog (OpenAI, Anthropic, ...) and your
+  own API-key configurations.
+- **Knowledge bases** — standalone, reusable document/web-crawl knowledge
+  bases, plus knowledge endpoints scoped directly to an agent.
+- **Platforms** — messaging platform catalog (Discord, Slack, WhatsApp,
+  ...) and connected configs used to deploy agents.
+- **Teams** — workspaces, membership, and invitations.
+- **Users & auth** — signup/signin, profile, onboarding, OAuth, and
+  password reset.
+
+The `studio` CLI is a thin, scriptable client over this API: every command
+maps directly to one or more documented endpoints, output is rendered as
+readable tables by default (or raw JSON with `--json` for scripting), and
+every mutating command supports non-interactive use (`--yes`, `--data`,
+`@file.json`) for CI and automation.
+
+### Design principles
+
+- **Clean layering.** Each implementation separates **transport**
+  (`apiClient`), **authentication/config** (`config`, `auth`),
+  **domain services** (one per API area, e.g. `agentsService`), and
+  **commands** (the CLI surface). Commands never talk to HTTP directly —
+  they call a service, which calls the API client.
+- **One seam to the network.** All HTTP calls funnel through a single
+  `APIClient` class per language. When this code is merged into the
+  official SDKs, that class is the only thing that needs to be swapped for
+  the SDK's own transport — services and commands are unaffected.
+- **Generic CRUD, specific behavior.** A shared `crud` helper
+  (`studio_cli/crud.py` / `src/crud.ts`) generates the standard
+  `list` / `get` / `create` / `update` / `delete` subcommands for every
+  resource from its service object, so each resource module only has to
+  add the behavior that's actually unique to it (`preview`, `execute`,
+  `connect`, `search`, file uploads, OAuth flows, streaming chat, ...).
+- **Rich terminal UX.** Both CLIs render colorized tables, spinners while
+  waiting on network calls, and interactive confirmation prompts for
+  destructive actions — with a `--json` escape hatch for scripting and
+  a `-y`/`--yes` flag to skip prompts non-interactively.
+
+---
+
+## Installation (Python)
+
+Requires **Python 3.9+**.
+
+### From source (this repository)
+
+```bash
+cd python
+python3 -m venv .venv
+source .venv/bin/activate         # Windows: .venv\Scripts\activate
+pip install -e .
+```
+
+This installs the `studio` command on your `PATH` (via the
+`[project.scripts]` entry point in `pyproject.toml`), backed by the
+`studio_cli` package.
+
+Verify:
+
+```bash
+studio --version
+studio --help
+```
+
+### Dependencies
+
+- [`click`](https://click.palletsprojects.com/) — command-line parsing.
+- [`rich`](https://rich.readthedocs.io/) — tables, spinners, colored output.
+- [`requests`](https://requests.readthedocs.io/) — HTTP transport.
+
+---
+
+## Installation (JavaScript/Node.js)
+
+Requires **Node.js 18+**.
+
+### From source (this repository)
+
+```bash
+cd javascript
+npm install
+npm run build      # compiles TypeScript -> dist/
+npm link           # makes `studio` available globally from this checkout
+```
+
+`npm link` uses the `bin` entry in `package.json` (`studio` ->
+`dist/index.js`) to expose the executable globally without publishing to
+npm. Alternatively, run it directly without linking:
+
+```bash
+node dist/index.js --help
+```
+
+Verify:
+
+```bash
+studio --version
+studio --help
+```
+
+### Dependencies
+
+- [`commander`](https://github.com/tj/commander.js) — command-line parsing.
+- [`axios`](https://axios-http.com/) — HTTP transport (incl. streaming).
+- [`chalk`](https://github.com/chalk/chalk), [`cli-table3`](https://github.com/cli-table/cli-table3), [`ora`](https://github.com/sindresorhus/ora) — colors, tables, spinners.
+- [`inquirer`](https://github.com/SBoudrias/Inquirer.js) — interactive prompts.
+- [`form-data`](https://github.com/form-data/form-data) — multipart file uploads.
+- TypeScript, `ts-node`, and `@types/*` as dev dependencies.
+
+---
+
+## The `studio` executable
+
+Both implementations install the same executable name and top-level
+surface:
+
+```
+studio [--json] [--api-url URL] <command> [subcommand] [args...] [options...]
+```
+
+Global options (available on every command, in both languages):
+
+| Flag | Description |
+|------|-------------|
+| `--json` | Print raw JSON instead of a formatted table. |
+| `--api-url <url>` | Override the configured API base URL for this invocation only (does not persist). |
+| `--version` | Print the CLI version. |
+| `-h, --help` | Show help for the current command. |
+
+Top-level command groups:
+
+```
+auth        Authentication and account commands.
+config      Manage local CLI configuration (~/.studio/config.json).
+users       User management and invitations.
+teams       Teams, members, and invitations.
+agents      Agent CRUD and preview chat.
+assistant   AI Copilot: chat, sessions, configuration, analytics.
+mcp         MCP servers and connections.
+http-api    HTTP API tools and connections.
+llm         LLM providers and API-key configurations.
+kb          Knowledge bases (standalone and agent-linked).
+platforms   Messaging platform catalog and connected configs.
+```
+
+Run `studio <command> --help` (and `studio <command> <subcommand> --help`)
+at any level for the full, always-up-to-date option list — the reference
+below summarizes the surface but the `--help` output is the source of
+truth for exact flags.
+
+---
+
+## Authentication
+
+The CLI authenticates against the documented `/dapi/auth/` endpoints and
+stores the resulting token bundle locally.
+
+```bash
+# Interactive (prompts for email/password)
+studio auth login
+
+# Non-interactive
+studio auth login --email you@example.com --password '...'
+
+# Create a new account (also signs you in)
+studio auth signup --email you@example.com --name "Your Name" --password '...'
+
+# Who am I?
+studio auth whoami
+
+# Sign out (clears local credentials)
+studio auth logout
+```
+
+On sign-in/sign-up, the CLI stores whatever the backend returns from its
+token bundle: a JWT `access`/`refresh` pair and/or a DRF `token`. Requests
+prefer `Authorization: Bearer <access>` when a JWT is present, falling
+back to `Authorization: Token <token>`. If a request gets a `401` and a
+`refresh` token is on file, the CLI transparently calls
+`/dapi/auth/token/refresh/` once and retries before giving up.
+
+### Other auth flows
+
+```bash
+studio auth forgot-password --email you@example.com
+studio auth reset-password --token <reset-token> --password '...'
+studio auth oauth-providers
+studio auth oauth-start <provider>        # prints the authorization_url to open
+studio auth update-profile --name "New Name" --avatar-url https://...
+studio auth onboarding --role developer
+```
+
+### Non-interactive / CI usage
+
+Two environment variables let you skip `studio auth login` entirely in
+scripts and CI:
+
+| Variable | Effect |
+|----------|--------|
+| `STUDIO_API_URL` | Overrides the configured API base URL. |
+| `STUDIO_TOKEN` | Supplies a bearer/DRF token directly, without touching the local config file. |
+
+```bash
+STUDIO_API_URL=https://api.your-studio.example \
+STUDIO_TOKEN=your-token-here \
+studio agents list --json
+```
+
+---
+
+## Configuration
+
+Configuration is a small JSON file, created on first use:
+
+- Default location: `~/.studio/config.json`
+- Override the directory: `STUDIO_CONFIG_DIR`
+- Override the exact file path: `STUDIO_CONFIG_PATH`
+
+It stores the API base URL, the token bundle from authentication, and a
+few convenience fields (`user_email`, `user_id`, `team_id`,
+`output_format`). File permissions are set to `0600` where the platform
+supports it.
+
+```bash
+studio config show                          # prints config, secrets masked
+studio config get api_url
+studio config set api_url https://api.your-studio.example
+studio config path                          # prints the file path
+```
+
+Precedence, highest to lowest:
+
+1. Command-line flags for this invocation (`--api-url`, `--json`)
+2. Environment variables (`STUDIO_API_URL`, `STUDIO_TOKEN`)
+3. The persisted config file
+4. Built-in defaults
+
+---
+
+## Command reference
+
+Every command below exists — with the same name, arguments, and behavior —
+in both the Python and JavaScript implementations.
+
+### `auth`
+
+| Command | Description |
+|---|---|
+| `auth signup --email --name --password` | Create an account and sign in. |
+| `auth login --email --password` | Sign in and store credentials. |
+| `auth logout` | Sign out and clear local credentials. |
+| `auth whoami` | Show the current user (`GET /dapi/auth/me/`). |
+| `auth update-profile [--name] [--avatar-url]` | Update your profile. |
+| `auth onboarding --role` | Submit onboarding details. |
+| `auth forgot-password --email` | Request a password-reset email. |
+| `auth reset-password --token --password` | Reset your password. |
+| `auth oauth-providers` | List available OAuth providers. |
+| `auth oauth-start <provider>` | Start an OAuth login flow. |
+
+### `config`
+
+| Command | Description |
+|---|---|
+| `config show` | Print the current configuration (secrets masked). |
+| `config get <key>` | Print one configuration value. |
+| `config set <key> <value>` | Set one configuration value. |
+| `config path` | Print the path to the config file. |
+
+### `users`
+
+Standard CRUD (`list`, `get <id>`, `create --data`, `update <id> --data`,
+`delete <id>`) over `/dapi/users/`, plus:
+
+| Command | Description |
+|---|---|
+| `users invitations list` | List invitations for the current user. |
+| `users invitations accept <token>` | Accept an invitation. |
+| `users invitations decline <token>` | Decline an invitation. |
+
+### `teams`
+
+Standard CRUD over `/dapi/teams/`, plus:
+
+| Command | Description |
+|---|---|
+| `teams members list <team_id>` | List a team's members. |
+| `teams members add <team_id> --user --role` | Add a member. |
+| `teams members remove <team_id> <user_id>` | Remove a member. |
+| `teams invitations list <team_id>` | List a team's invitations. |
+| `teams invitations create <team_id> --email --role` | Invite someone. |
+| `teams invitations accept <token>` | Accept a team invitation. |
+| `teams invitations decline <token>` | Decline a team invitation. |
+
+### `agents`
+
+Standard CRUD over `/dapi/agents/`, plus:
+
+| Command | Description |
+|---|---|
+| `agents preview <agent_id> --message` | Send a one-off test message to an agent and print its reply and any tool calls. |
+
+### `assistant` (AI Copilot)
+
+| Command | Description |
+|---|---|
+| `assistant chat --message [--session] [--stream]` | Chat with Copilot. `--stream` consumes the SSE stream endpoint and prints text as it arrives. |
+| `assistant config get` / `assistant config update --data` | Read/update Copilot configuration (model, temperature, system prompt, ...). |
+| `assistant sessions list` / `create` / `get <id>` / `rename <id> --title` / `delete <id>` | Manage chat sessions. |
+| `assistant sessions state <id>` | Show a session's current state. |
+| `assistant sessions stop <id>` | Stop an in-progress session. |
+| `assistant sessions retry <id> --from-event` | Retry from a given event. |
+| `assistant sessions events list <id>` | List a session's event history. |
+| `assistant sessions events edit <id> <event_id> --content` | Edit a message. |
+| `assistant sessions events regenerate <id> <event_id> [--prompt]` | Regenerate a reply. |
+| `assistant sessions events feedback <id> <event_id> --value up\|down [--note]` | Leave feedback. |
+| `assistant analytics` | Copilot usage analytics. |
+
+### `mcp`
+
+| Command | Description |
+|---|---|
+| `mcp servers list\|get\|create\|update\|delete` | CRUD over MCP server definitions. |
+| `mcp connections list\|get\|create\|update\|delete` | CRUD over MCP connections. |
+| `mcp connections oauth-initiate <connection_id>` | Start an OAuth flow for a connection. |
+
+### `http-api`
+
+| Command | Description |
+|---|---|
+| `http-api tools list\|get\|create\|update\|delete` | CRUD over HTTP API tool definitions. |
+| `http-api connections list\|get\|create\|update\|delete` | CRUD over HTTP API connections. |
+| `http-api connections execute <connection_id> [--data]` | Execute a connection. |
+| `http-api connections oauth-initiate <connection_id>` | Start an OAuth flow for a connection. |
+
+### `llm`
+
+| Command | Description |
+|---|---|
+| `llm providers list\|get` | Browse the LLM provider catalog (read-only). |
+| `llm providers models <provider_id>` | List available models for a provider. |
+| `llm configs list\|get\|create\|update\|delete` | CRUD over your provider API-key configurations. |
+
+### `kb` (knowledge bases)
+
+Standard CRUD over `/dapi/knowledge-bases/`, plus:
+
+| Command | Description |
+|---|---|
+| `kb documents list\|upload\|get\|delete\|chunks <kb_id> [...]` | Standalone KB documents. |
+| `kb domains list\|add\|get\|delete\|crawl <kb_id> [...]` | Standalone KB crawl domains. |
+| `kb stats <kb_id>` / `kb search <kb_id> --query` | Standalone KB stats/search. |
+| `kb agent stats <agent_id>` | Agent-scoped KB stats. |
+| `kb agent documents list\|upload\|get\|delete\|chunks <agent_id> [...]` | Agent-scoped KB documents. |
+| `kb agent domains list\|add\|delete\|crawl <agent_id> [...]` | Agent-scoped KB domains. |
+| `kb agent search <agent_id> --query` / `kb agent test <agent_id> --query` | Agent-scoped search/test. |
+| `kb agent attachments list\|available\|attach\|update\|detach <agent_id> [...]` | Attach/detach a standalone KB to/from an agent. |
+
+### `platforms`
+
+| Command | Description |
+|---|---|
+| `platforms catalog list\|get` | Browse the platform catalog (read-only). |
+| `platforms configs list\|get\|create\|update\|delete` | CRUD over platform configs. |
+| `platforms connect --platform --credentials` | Connect a platform. |
+| `platforms disconnect --platform` | Disconnect a platform. |
+
+### Shared flags across CRUD commands
+
+| Flag | Applies to | Description |
+|---|---|---|
+| `--data <json>` / `--data @file.json` | `create`, `update`, and similar | JSON payload inline or from a file. |
+| `--full` | `update` | Send a full `PUT` replace instead of a partial `PATCH`. |
+| `--page`, `--page-size` | `list` | Pagination, when the backend supports it. |
+| `--filter key=value` (repeatable) | `list` | Extra query-string filters. |
+| `-y, --yes` | `delete` and other destructive actions | Skip the confirmation prompt. |
+
+---
+
+## Usage examples
+
+```bash
+# Authenticate
+studio auth login --email you@example.com --password '...'
+
+# Create an agent
+studio agents create --data '{
+  "name": "Support Agent",
+  "description": "Handles support questions",
+  "system_prompt": "You are a helpful support assistant.",
+  "tone": "friendly",
+  "model_name": "gpt-4o"
+}'
+
+# List agents as a table, then as JSON for scripting
+studio agents list
+studio --json agents list | jq '.results[].id'
+
+# Try it out
+studio agents preview 1 --message "What are your support hours?"
+
+# Attach an MCP tool connection to an agent
+studio agents update 1 --data '{"tool_connections": [7]}'
+
+# Create a standalone knowledge base, upload a doc, and search it
+KB_ID=$(studio --json kb create --data '{"name": "Support KB"}' | jq -r '.id')
+studio kb documents upload "$KB_ID" --file ./policy.pdf
+studio kb search "$KB_ID" --query "refund policy"
+
+# Attach that KB to an agent
+studio kb agent attachments attach 1 --kb-id "$KB_ID" --max-context-chunks 5
+
+# Chat with the Copilot assistant, streaming the reply
+studio assistant chat --message "Draft a system prompt for a billing agent" --stream
+
+# Connect a messaging platform
+studio platforms catalog list
+studio platforms connect --platform 1 --credentials '{"bot_token": "xoxb-..."}'
+
+# Invite a teammate
+studio teams invitations create 1 --email teammate@example.com --role member
+```
+
+---
+
+## Common workflows
+
+### 1. First-time setup
+
+```bash
+studio config set api_url https://api.your-studio.example
+studio auth login
+studio auth whoami
+```
+
+### 2. Stand up a new support agent end-to-end
+
+```bash
+# 1. Configure an LLM provider key (if you haven't already)
+studio llm configs create --data '{"provider": 1, "label": "OpenAI key", "api_key": "sk-..."}'
+
+# 2. Create the agent
+AGENT_ID=$(studio --json agents create --data '{
+  "name": "Support Agent",
+  "system_prompt": "You are a helpful support assistant.",
+  "llm_provider_config": 1,
+  "model_name": "gpt-4o"
+}' | jq -r '.id')
+
+# 3. Give it a knowledge base
+KB_ID=$(studio --json kb create --data '{"name": "Support KB"}' | jq -r '.id')
+studio kb documents upload "$KB_ID" --file ./help-center-export.pdf
+studio kb agent attachments attach "$AGENT_ID" --kb-id "$KB_ID"
+
+# 4. Give it a tool
+CONN_ID=$(studio --json mcp connections create --data '{"server": 1, "label": "Prod GitHub"}' | jq -r '.id')
+studio agents update "$AGENT_ID" --data "{\"tool_connections\": [$CONN_ID]}"
+
+# 5. Deploy it to a messaging platform
+studio platforms connect --platform 1 --credentials '{"bot_token": "xoxb-..."}'
+studio agents update "$AGENT_ID" --data '{"platform_configs": [1]}'
+
+# 6. Try it
+studio agents preview "$AGENT_ID" --message "Hi, I need help with a refund."
+```
+
+### 3. Scripted / CI usage
+
+```bash
+export STUDIO_API_URL=https://api.your-studio.example
+export STUDIO_TOKEN="$STUDIO_CI_TOKEN"
+
+studio --json agents list | jq '.results | length'
+studio agents update "$AGENT_ID" --data '{"status": "active"}' --yes 2>/dev/null
+```
+
+### 4. Team onboarding
+
+```bash
+studio teams create --data '{"name": "Customer Success", "slug": "customer-success"}'
+studio teams invitations create 1 --email newhire@example.com --role member
+# newhire@example.com:
+studio teams invitations accept <token-from-email>
+```
+
+---
+
+## Development setup
+
+### Python
+
+```bash
+cd python
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+
+# Byte-compile / sanity check
+python -m compileall studio_cli
+
+# Run against a local/staging backend
+studio --api-url http://localhost:8000 auth login
+```
+
+Project conventions:
+
+- All network paths live in `studio_cli/endpoints.py` — nothing else
+  constructs a URL string.
+- All HTTP happens in `studio_cli/api_client.py` — services never call
+  `requests` directly.
+- Every resource gets a `services/<resource>_service.py` (business logic,
+  no CLI concerns) and a `commands/<resource>_cmd.py` (CLI concerns,
+  calls the service).
+- Standard CRUD commands are generated by `crud.build_crud_group(...)`;
+  only bespoke behavior is hand-written.
+
+### JavaScript/TypeScript
+
+```bash
+cd javascript
+npm install
+npm run build     # tsc -> dist/
+npm run dev        # ts-node src/index.ts, for iterating without a build step
+npm run lint        # tsc --noEmit
+```
+
+Project conventions mirror the Python package 1:1:
+
+- `src/endpoints.ts` — all paths.
+- `src/apiClient.ts` — all HTTP.
+- `src/services/*Service.ts` — business logic per resource.
+- `src/commands/*.ts` — CLI surface per resource.
+- `src/crud.ts` — generic CRUD command factory (`buildCrudCommand`).
+
+### Testing against a mock backend
+
+Both implementations were validated end-to-end (login, token storage,
+authenticated `GET`, table and `--json` rendering, pagination metadata)
+against a minimal local HTTP mock implementing the documented
+`/dapi/auth/signin/`, `/dapi/auth/me/`, and `/dapi/agents/` response
+shapes. Point either CLI at any backend that implements the endpoints in
+this reference with `--api-url` or `STUDIO_API_URL`.
+
+---
+
+## Project structure
+
+```
+chatatp-studio-cli/
+├── README.md                     # this file
+├── python/
+│   ├── pyproject.toml
+│   ├── requirements.txt
+│   └── studio_cli/
+│       ├── __main__.py           # entry point / top-level `studio` group
+│       ├── config.py             # ~/.studio/config.json load/save
+│       ├── context.py            # CLIContext: config + client + services
+│       ├── api_client.py         # single HTTP seam (requests)
+│       ├── endpoints.py          # every API path, in one place
+│       ├── exceptions.py         # StudioError / APIError / AuthenticationError
+│       ├── ui.py                 # rich tables, spinners, prompts, JSON
+│       ├── crud.py               # generic CRUD command factory
+│       ├── services/             # one file per API area, HTTP-shaped logic
+│       │   ├── base.py
+│       │   ├── auth_service.py
+│       │   ├── users_service.py
+│       │   ├── teams_service.py
+│       │   ├── agents_service.py
+│       │   ├── assistant_service.py
+│       │   ├── mcp_service.py
+│       │   ├── http_api_service.py
+│       │   ├── llm_service.py
+│       │   ├── kb_service.py
+│       │   └── platforms_service.py
+│       └── commands/              # one file per API area, CLI surface
+│           ├── auth_cmd.py
+│           ├── config_cmd.py
+│           ├── users_cmd.py
+│           ├── teams_cmd.py
+│           ├── agents_cmd.py
+│           ├── assistant_cmd.py
+│           ├── mcp_cmd.py
+│           ├── http_api_cmd.py
+│           ├── llm_cmd.py
+│           ├── kb_cmd.py
+│           └── platforms_cmd.py
+└── javascript/
+    ├── package.json
+    ├── tsconfig.json
+    └── src/
+        ├── index.ts               # entry point / top-level `studio` program
+        ├── config.ts
+        ├── context.ts
+        ├── apiClient.ts
+        ├── endpoints.ts
+        ├── errors.ts
+        ├── ui.ts
+        ├── crud.ts
+        ├── services/
+        │   ├── base.ts
+        │   ├── authService.ts
+        │   ├── usersService.ts
+        │   ├── teamsService.ts
+        │   ├── agentsService.ts
+        │   ├── assistantService.ts
+        │   ├── mcpService.ts
+        │   ├── httpApiService.ts
+        │   ├── llmService.ts
+        │   ├── kbService.ts
+        │   └── platformsService.ts
+        └── commands/
+            ├── auth.ts
+            ├── config.ts
+            ├── users.ts
+            ├── teams.ts
+            ├── agents.ts
+            ├── assistant.ts
+            ├── mcp.ts
+            ├── httpApi.ts
+            ├── llm.ts
+            ├── kb.ts
+            └── platforms.ts
+```
+
+The two trees are intentionally isomorphic — the same resource, in the
+same relative position, with the same responsibilities — so a change made
+in one language has an obvious counterpart location in the other.
+
+---
+
+## Integrating into the official SDKs
+
+This CLI was deliberately built **without** a dependency on
+`chatatp-studio` or `@chatatp/studio`, so it can be developed and tested
+in isolation and merged in later. The merge path is the same idea in both
+languages: **replace the transport, keep everything above it.**
+
+### Into `chatatp-studio` (Python)
+
+1. Copy `python/studio_cli/` into the `chatatp-studio` package (e.g. as a
+   `chatatp_studio.cli` subpackage), and move the `studio` console-script
+   entry point into `chatatp-studio`'s own `pyproject.toml`.
+2. Replace `studio_cli/api_client.py`'s `APIClient` with a thin adapter
+   around the official SDK client (same public methods —
+   `get/post/put/patch/delete/upload` — so nothing else changes), *or*
+   change each `services/*.py` file to call the SDK's own resource
+   clients directly instead of `self.client.get(...)`.
+3. `studio_cli/config.py` can stay as-is (local CLI credential storage is
+   still useful for a CLI even when the SDK is doing the request work),
+   or be replaced with the SDK's own credential/session management if it
+   has one.
+4. `studio_cli/endpoints.py` becomes redundant once the SDK owns URL
+   construction — delete it and the corresponding `.format(...)` calls in
+   services.
+5. Everything in `commands/` and `crud.py` is transport-agnostic and
+   should require no changes.
+
+### Into `@chatatp/studio` (JavaScript/TypeScript)
+
+1. Copy `javascript/src/` into the `@chatatp/studio` package (e.g. as a
+   `cli/` subdirectory), and move the `studio` `bin` entry into
+   `@chatatp/studio`'s own `package.json`.
+2. Replace `src/apiClient.ts`'s `APIClient` class with a thin adapter
+   around the official SDK client (same public methods), *or* change each
+   `src/services/*.ts` file to call the SDK's own resource clients
+   directly.
+3. `src/config.ts` can stay for local CLI credential storage, or be
+   replaced with the SDK's own session handling.
+4. `src/endpoints.ts` becomes redundant once the SDK owns URL
+   construction.
+5. Everything in `src/commands/` and `src/crud.ts` is transport-agnostic
+   and should require no changes.
+
+In both cases, the fact that **services are the only layer that talks to
+the API client, and the API client is the only layer that talks to the
+network**, is what makes this swap mechanical rather than a rewrite.
+
+---
+
+## A note on endpoint inference
+
+The generated ChatATP Studio API Reference fully enumerates HTTP methods
+and paths for **auth/users, teams, platforms, knowledge bases, and the
+assistant/Copilot API**. For **agents, MCP, HTTP API tools, and LLM
+providers**, the reference documents the base path and the exact response
+schema (including a full `MCPConnection`/`HttpApiConnection`/etc.
+serializer), but does not enumerate every individual endpoint path.
+
+For those four areas, this CLI infers collection (`<base>/`) and detail
+(`<base>/<id>/`) paths by following the identical REST convention used by
+every fully-documented resource in the same reference. This is called out
+explicitly, resource by resource, in the comments at the top of
+`studio_cli/endpoints.py` / `src/endpoints.ts` — search for `(inferred)`.
+
+If your backend's actual routes differ (for example, `/dapi/mcp/` might
+resolve servers and connections under different sub-paths, or without the
+`servers/` / `connections/` segments shown here), everything in the CLI
+is designed to be fixed in **one place**: update the corresponding
+constant(s) in `endpoints.py` / `endpoints.ts` and every service and
+command that uses it is automatically corrected — no other file needs to
+change.

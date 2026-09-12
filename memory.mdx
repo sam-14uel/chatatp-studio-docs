@@ -1,0 +1,76 @@
+---
+title: Memory
+description: Manage agent and user memories with the SDKs and CLI
+---
+
+The Python and JavaScript SDKs expose memory operations through `client.memories`. The Studio CLI exposes the same management workflow through `studio memory` and uses the authenticated `/dapi/` endpoints used by the Studio frontend.
+
+## Python SDK
+
+```python
+from chatatp_studio import ChatATPClient
+
+async with ChatATPClient(api_key="chatatp_sk_...") as client:
+    memory = await client.memories.create(
+        7,
+        title="Preferred response style",
+        content="The user prefers concise answers.",
+        memory_type="preference",
+        importance=1.0,
+    )
+    memories = await client.memories.list(7)
+```
+
+## JavaScript SDK
+
+```typescript
+import { ChatATPClient } from "@chatatp/studio";
+
+const client = new ChatATPClient({ apiKey: "chatatp_sk_..." });
+const memory = await client.memories.create(7, {
+  title: "Preferred response style",
+  content: "The user prefers concise answers.",
+  memory_type: "preference",
+  importance: 1.0,
+});
+```
+
+Memory indexing is asynchronous. Poll `list()` and inspect `status`, `chunk_count`, and `error_message`.
+
+## Search per-user memory
+
+```python
+user_memory = await client.memories.create(
+    7,
+    title="Subscription plan",
+    content="The user is on the Pro plan.",
+    agent_user_id=42,
+    memory_type="fact",
+)
+
+result = await client.memories.search(7, 42, "What plan is the user on?")
+print(result["context"])
+```
+
+```typescript
+const result = await client.memories.search(
+  7,
+  42,
+  "What plan is the user on?",
+  5,
+);
+console.log(result.context);
+```
+
+## CLI
+
+```bash
+studio memory list <agent-id>
+studio memory create <agent-id> --data '{"title":"Preference","content":"Concise answers"}'
+studio memory search <agent-id> --query "response style"
+studio memory user list <agent-id> --agent-user <agent-user-id>
+studio memory user create <agent-id> --data '{"agent_user":"<agent-user-id>","title":"Plan","content":"Pro"}'
+studio memory user search <agent-id> --agent-user <agent-user-id> --query "plan"
+```
+
+The CLI uses `/dapi/agents/{agent_id}/memories/` and `/dapi/agents/{agent_id}/user-memories/`, matching the frontend management API.

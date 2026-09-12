@@ -419,6 +419,25 @@ Standard CRUD over `/dapi/knowledge-bases/`, plus:
 | `kb agent search <agent_id> --query` / `kb agent test <agent_id> --query` | Agent-scoped search/test. |
 | `kb agent attachments list\|available\|attach\|update\|detach <agent_id> [...]` | Attach/detach a standalone KB to/from an agent. |
 
+### `memory`
+
+| Command | Description |
+|---|---|
+| `memory list\|create\|get\|update\|delete <agent_id> [...]` | Manage agent memories. |
+| `memory search <agent_id> --query` | Search agent memories. |
+| `memory stats <agent_id>` | Show agent-memory indexing statistics. |
+| `memory user list\|create\|get\|update\|delete <agent_id> [...]` | Manage memories associated with a platform user. |
+| `memory user search <agent_id> --agent-user --query` | Search memories for one platform user. |
+
+### `automations` and `schedules`
+
+| Command | Description |
+|---|---|
+| `automations list\|get\|create\|update\|delete` | CRUD over builder automations. |
+| `automations pause\|resume\|run-now\|runs <id>` | Control an automation and inspect execution history. |
+| `schedules list\|get\|create\|update\|delete` | CRUD over end-user schedules. |
+| `schedules pause\|resume\|run-now\|runs <id>` | Control a schedule and inspect execution history. |
+
 ### `platforms`
 
 | Command | Description |

@@ -22,7 +22,11 @@
             "pages": [
               "introduction",
               "quickstart",
-              "cli/overview"
+              "cli/overview",
+              "knowledge-base",
+              "memory",
+              "automation",
+              "scheduling"
             ]
           }
         ]

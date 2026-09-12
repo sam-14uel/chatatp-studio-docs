@@ -1,0 +1,49 @@
+---
+title: Scheduling
+description: Schedule agent work for conversations with the Python and JavaScript SDKs
+---
+
+Use `client.schedules` for conversation-scoped end-user schedules.
+
+## Python SDK
+
+```python
+schedules = await client.schedules.list()
+schedule = await client.schedules.create(
+    agent_id=7,
+    conversation_id=91,
+    title="Send renewal reminder",
+    prompt_text="Remind the user about their renewal date.",
+    schedule_type="one_time",
+    schedule_config={"run_at": "2026-10-01T09:00:00Z"},
+)
+```
+
+## JavaScript SDK
+
+```typescript
+const schedules = await client.schedules.list();
+const schedule = await client.schedules.create(7, 91, {
+  title: "Send renewal reminder",
+  prompt_text: "Remind the user about their renewal date.",
+  schedule_type: "one_time",
+  schedule_config: { run_at: "2026-10-01T09:00:00Z" },
+});
+```
+
+Schedule responses include `status`, `enabled`, and `next_run_at`.
+
+## CLI
+
+The CLI uses the authenticated `/dapi/scheduling/user-tasks/` management API:
+
+```bash
+studio schedules list
+studio schedules create --data '{"agent":7,"conversation":91,"title":"Send renewal reminder","prompt_text":"Remind the user","schedule_type":"one_time","schedule_config":{"run_at":"2026-10-01T09:00:00Z"}}'
+studio schedules pause <schedule-id>
+studio schedules resume <schedule-id>
+studio schedules run-now <schedule-id>
+studio schedules runs <schedule-id>
+studio schedules update <schedule-id> --data '{"title":"Updated reminder"}'
+studio schedules delete <schedule-id>
+```

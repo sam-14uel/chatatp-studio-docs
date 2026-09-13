@@ -1,0 +1,400 @@
+/* ChatATP Studio docs copilot — Mintlify-style assistant chrome */
+
+:root {
+  --catp-accent: #6366f1;
+  --catp-accent-2: #818cf8;
+  --catp-sidebar-width: 420px;
+}
+
+.catp-hidden {
+  display: none !important;
+}
+
+.catp-ask-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  margin-left: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--background-light, var(--background));
+  color: var(--gray-900, inherit);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.catp-ask-btn:hover {
+  border-color: var(--catp-accent);
+  color: var(--catp-accent);
+}
+
+.catp-ask-btn svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+
+.catp-kbd {
+  font-size: 11px;
+  opacity: 0.55;
+  font-weight: 500;
+}
+
+.catp-float {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 40;
+  width: min(640px, calc(100vw - 32px));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--background) 88%, transparent);
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 4%),
+    0 12px 40px rgb(15 23 42 / 10%);
+}
+
+.catp-float-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--catp-accent);
+  flex: none;
+}
+
+.catp-float-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+}
+
+.catp-float-input::placeholder {
+  color: var(--gray-500, #64748b);
+}
+
+.catp-float-send {
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--catp-accent);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.catp-float-send:hover {
+  background: #4f46e5;
+}
+
+.catp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  background: rgb(15 23 42 / 18%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.catp-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.catp-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 50;
+  width: min(var(--catp-sidebar-width), 100vw);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  border-left: 1px solid var(--border);
+  box-shadow: -16px 0 40px rgb(15 23 42 / 8%);
+  transform: translateX(100%);
+  transition: transform 220ms ease;
+}
+
+.catp-sidebar.open {
+  transform: translateX(0);
+}
+
+.catp-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 56px;
+  padding: 0 14px 0 16px;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+
+.catp-head-title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.catp-head-title strong {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.catp-head-title span {
+  font-size: 12px;
+  color: var(--gray-500, #64748b);
+}
+
+.catp-icon-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.catp-icon-btn:hover {
+  background: var(--background-dark, rgb(127 127 127 / 10%));
+}
+
+.catp-messages {
+  flex: 1;
+  overflow: auto;
+  padding: 20px 16px 12px;
+}
+
+.catp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48px 16px 24px;
+}
+
+.catp-empty-mark {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--catp-accent) 12%, transparent);
+  color: var(--catp-accent);
+  margin-bottom: 14px;
+}
+
+.catp-empty h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
+.catp-empty p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--gray-500, #64748b);
+  max-width: 280px;
+}
+
+.catp-starters {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.catp-starter {
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.catp-starter:hover {
+  border-color: var(--catp-accent);
+}
+
+.catp-starter small {
+  display: block;
+  margin-top: 2px;
+  color: var(--gray-500, #64748b);
+  font-size: 12px;
+}
+
+.catp-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.catp-row.user {
+  justify-content: flex-end;
+}
+
+.catp-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--catp-accent) 14%, transparent);
+  color: var(--catp-accent);
+}
+
+.catp-bubble {
+  max-width: 86%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.catp-row.user .catp-bubble {
+  background: var(--catp-accent);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.catp-row.agent .catp-bubble {
+  background: var(--background-dark, rgb(127 127 127 / 8%));
+  border-bottom-left-radius: 4px;
+}
+
+.catp-bubble p {
+  margin: 0 0 8px;
+}
+
+.catp-bubble p:last-child {
+  margin-bottom: 0;
+}
+
+.catp-bubble pre {
+  margin: 8px 0;
+  padding: 10px;
+  border-radius: 10px;
+  overflow: auto;
+  font-size: 12px;
+  background: rgb(15 23 42 / 8%);
+}
+
+.catp-bubble code {
+  font-size: 12.5px;
+}
+
+.catp-bubble a {
+  color: var(--catp-accent);
+}
+
+.catp-tools {
+  font-size: 12px;
+  color: var(--gray-500, #64748b);
+  margin: 0 0 8px 36px;
+}
+
+.catp-composer {
+  flex: none;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.catp-composer-box {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 8px 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--background-light, var(--background));
+}
+
+.catp-composer-box:focus-within {
+  border-color: var(--catp-accent);
+}
+
+.catp-composer textarea {
+  flex: 1;
+  resize: none;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  max-height: 140px;
+  min-height: 22px;
+}
+
+.catp-send {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--catp-accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.catp-send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.catp-disclaimer {
+  margin: 8px 2px 0;
+  font-size: 11px;
+  color: var(--gray-500, #64748b);
+  text-align: center;
+}
+
+body.catp-open {
+  overflow: hidden;
+}
+
+@media (max-width: 720px) {
+  .catp-float {
+    bottom: 12px;
+    width: calc(100vw - 16px);
+  }
+
+  .catp-ask-btn .catp-kbd,
+  .catp-ask-btn-label {
+    display: none;
+  }
+}

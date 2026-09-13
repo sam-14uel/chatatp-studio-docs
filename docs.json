@@ -43,6 +43,7 @@
             "pages": [
               "introduction",
               "quickstart",
+              "embedding",
               "cli/overview"
             ]
           }

@@ -1,0 +1,114 @@
+---
+title: Embedding
+description: Embed a ChatATP agent widget on any website and configure every widget attribute
+---
+
+# Embed a ChatATP agent widget
+
+You can embed a ChatATP agent directly on a public website, documentation page, or support portal by loading the web widget runtime and passing the agent token plus the widget configuration fields you need.
+
+The widget is intentionally lightweight:
+
+```html
+<link rel="stylesheet" href="https://chatatp-agent-builder-backend.onrender.com/static/chatatp-ui.css" />
+<div id="agent-chat-widget"
+  data-agent-token="YOUR_AGENT_TOKEN"
+  data-api-base="https://chatatp-agent-builder-backend.onrender.com/dapi/web-chat"
+  data-ui-stylesheet="https://chatatp-agent-builder-backend.onrender.com/static/chatatp-ui.css"
+  data-title="Support Agent"
+  data-show-powered-by="true">
+</div>
+
+<script src="https://chatatp-agent-builder-backend.onrender.com/static/agent-chat-widget-app.js"></script>
+<script src="https://chatatp-agent-builder-backend.onrender.com/static/agent-chat-widget.js"
+  data-agent-token="YOUR_AGENT_TOKEN"
+  data-api-base="https://chatatp-agent-builder-backend.onrender.com/dapi/web-chat"
+  data-ui-stylesheet="https://chatatp-agent-builder-backend.onrender.com/static/chatatp-ui.css"
+  data-title="Support Agent"
+  data-show-powered-by="true"
+  data-position="bottom-right"
+  data-theme="light"
+  data-width="400"
+  data-height="500"
+  data-logo-url="https://example.com/logo.png"
+  data-primary-color="#6366F1"
+  data-secondary-color="#818CF8"
+  data-allowed-routes='["/", "/pricing"]'
+  data-disallowed-routes='["/admin/*"]'
+  data-identity-from-session="true">
+</script>
+```
+
+## Required fields
+
+The widget needs three things before it can render:
+
+- `data-agent-token`: the agent or deployment token exposed from the ChatATP dashboard.
+- `data-api-base`: the base URL for the web chat API route, usually `https://chatatp-agent-builder-backend.onrender.com/dapi/web-chat`.
+- `data-ui-stylesheet`: the stylesheet URL that applies the widget’s UI styles.
+
+## Optional fields
+
+The full list of common fields is shown below.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `data-position` | `string` | `bottom-right` | Places the widget launcher in the bottom right or bottom left corner. |
+| `data-theme` | `string` | `light` | UI theme, usually `light` or `dark`. |
+| `data-width` | `number` | `400` | Widget width in pixels. |
+| `data-height` | `number` | `500` | Widget height in pixels. |
+| `data-title` | `string` | `AI Assistant` | Visible widget title or display name. |
+| `data-logo-url` | `url` | empty | Logo image for the launcher/header. |
+| `data-primary-color` | `color` | empty | Primary theme color used in active UI elements. |
+| `data-secondary-color` | `color` | empty | Secondary UI color. |
+| `data-show-powered-by` | `boolean` | `true` | Show ChatATP branding. Enterprise or white-label deployments may hide it. |
+| `data-allowed-routes` | `JSON array` | empty | Restrict the widget to specific paths such as `["/", "/pricing"]`. |
+| `data-disallowed-routes` | `JSON array` | empty | Hide the widget on specific paths. This list overrides allowed routes. |
+| `data-identity-from-session` | `boolean` | `false` | If true, the widget prefers a session-backed user profile instead of asking for `full_name` and `email` again. |
+| `data-notification-sound` | `boolean` | `true` | Whether the widget plays a notification sound. |
+| `data-streaming` | `boolean` | `true` | Turn streaming responses on or off. |
+| `data-studio-url` | `url` | `https://studio.chat-atp.com` | Studio link source shown in the widget UI. |
+
+## Passing the authenticated identity
+
+If your site already has a signed-in user, you can avoid showing the default onboarding form by creating a profile object ahead of the widget script:
+
+```html
+<script>
+window.__CHATATP_AUTH__ = {
+  full_name: "Jane Doe",
+  email: "jane@example.com",
+  user_identifier: "user_12345",
+  location: "San Francisco, CA",
+};
+</script>
+```
+
+Then set:
+
+```html
+<script src="https://chatatp-agent-builder-backend.onrender.com/static/agent-chat-widget.js"
+  data-agent-token="YOUR_AGENT_TOKEN"
+  data-api-base="https://chatatp-agent-builder-backend.onrender.com/dapi/web-chat"
+  data-ui-stylesheet="https://chatatp-agent-builder-backend.onrender.com/static/chatatp-ui.css"
+  data-identity-from-session="true">
+</script>
+```
+
+The widget will reuse `full_name` and `email` from that object and keep the same visitor identity attached to the browser/device metadata sent during onboarding.
+
+## Route control
+
+Use `allowed-routes` and `disallowed-routes` to show the widget only on pages your agent should answer on.
+
+```html
+<script src="https://chatatp-agent-builder-backend.onrender.com/static/agent-chat-widget.js"
+  data-agent-token="YOUR_AGENT_TOKEN"
+  data-api-base="https://chatatp-agent-builder-backend.onrender.com/dapi/web-chat"
+  data-ui-stylesheet="https://chatatp-agent-builder-backend.onrender.com/static/chatatp-ui.css"
+  data-allowed-routes='["/support", "/docs/*"]'
+  data-disallowed-routes='["/admin/*"]'>
+</script>
+```
+
+For more advanced deployment or white-label settings, generate the embed snippet from the backend `web_chat.embed` payload. It exposes the same configuration shape as the static data attributes shown above.

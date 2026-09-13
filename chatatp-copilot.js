@@ -38,6 +38,28 @@
   const USER_KEY = "catp.docs.user";
   const ACTIVE_KEY = "catp.docs.active";
 
+  function getSessionAuth() {
+    try {
+      return (window.__CHATATP_AUTH__ && typeof window.__CHATATP_AUTH__ === "object")
+        ? window.__CHATATP_AUTH__
+        : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function resolveDocsVisitorIdentity() {
+    const auth = getSessionAuth();
+    const authIdentifier = auth.user_identifier || auth.email || auth.id || "";
+    if (authIdentifier) return String(authIdentifier);
+    return localStorage.getItem(USER_KEY) || createId("docs");
+  }
+
+  function resolveDocsDisplayName() {
+    const auth = getSessionAuth();
+    return auth.full_name || auth.email || "Docs visitor";
+  }
+
   const ICONS = {
     sparkle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.4 5.2L18 9.6l-4.6 1.4L12 16l-1.4-4.99L6 9.6l4.6-1.4L12 3z"/><path d="M18.5 14.5l.6 2.2 2.2.6-2.2.6-.6 2.2-.6-2.2-2.2-.6 2.2-.6.6-2.2z"/></svg>`,
     close: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
@@ -56,13 +78,18 @@
     busy: false,
     typing: false,
     client: null,
-    visitorId: localStorage.getItem(USER_KEY) || createId("docs"),
+    visitorId: resolveDocsVisitorIdentity(),
     conversationId: Number(localStorage.getItem(ACTIVE_KEY) || 0) || null,
     messages: [],
     threads: [],
     loadingHistory: false,
   };
-  localStorage.setItem(USER_KEY, state.visitorId);
+  if (!localStorage.getItem(USER_KEY)) {
+    localStorage.setItem(USER_KEY, state.visitorId);
+  }
+  if (getSessionAuth().user_identifier || getSessionAuth().email) {
+    localStorage.setItem(USER_KEY, state.visitorId);
+  }
 
   const els = {};
 
@@ -341,7 +368,7 @@
       const created = await client.conversations.create({
         agent_id: CONFIG.agentId,
         external_user_id: state.visitorId,
-        user_display_name: "Docs visitor",
+        user_display_name: resolveDocsDisplayName(),
       });
       if (created?.id) {
         state.conversationId = Number(created.id);
@@ -601,9 +628,17 @@
         : client.chatStream({
             agent_id: CONFIG.agentId,
             external_user_id: state.visitorId,
-            user_display_name: "Docs visitor",
+            user_display_name: resolveDocsDisplayName(),
             message: prompt,
-            metadata: { source: "mintlify-docs", ...context },
+            metadata: {
+              source: "mintlify-docs",
+              source_domain: location.hostname,
+              auth_source: getSessionAuth().user_identifier ? "chatatp_session" : "anonymous_docs",
+              email: getSessionAuth().email || "",
+              full_name: getSessionAuth().full_name || "",
+              user_identifier: getSessionAuth().user_identifier || "",
+              ...context,
+            },
           });
 
       for await (const event of stream) {

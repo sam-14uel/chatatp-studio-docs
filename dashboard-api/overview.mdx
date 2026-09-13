@@ -1,0 +1,181 @@
+---
+title: "Dashboard API"
+description: "HTTPS paths used by the Studio CLI inside the Python and JavaScript packages"
+---
+
+The Studio CLI (`studio` / `@chatatp/studio` CLI) talks to the **Dashboard API** under `/dapi/`. These routes use a user session from `studio auth login`, not a Developer API key.
+
+<Warning>
+  `/dapi/` is the builder/dashboard surface. Integrations that send messages as an end user should use the [Developer API](/api-reference/overview) (`/v1/`) instead.
+</Warning>
+
+## Base URL
+
+Same host as the Developer API:
+
+```
+https://chatatp-agent-builder-backend.onrender.com
+```
+
+## Auth
+
+After `studio auth login`, the CLI stores a token and sends:
+
+```
+Authorization: Bearer <session-or-jwt>
+```
+
+Auth endpoints themselves accept email/password or OAuth and return that token.
+
+## Path catalog
+
+Copied from `src/chatatp_studio/cli/endpoints.py` and `src/cli/endpoints.ts`. Trailing slashes are required.
+
+### Auth and users
+
+| Constant | Path |
+|---|---|
+| `AUTH_SIGNUP` | `/dapi/auth/signup/` |
+| `AUTH_SIGNIN` | `/dapi/auth/signin/` |
+| `AUTH_FORGOT_PASSWORD` | `/dapi/auth/forgot-password/` |
+| `AUTH_RESET_PASSWORD` | `/dapi/auth/reset-password/` |
+| `AUTH_SIGNOUT` | `/dapi/auth/signout/` |
+| `AUTH_ME` | `/dapi/auth/me/` |
+| `AUTH_PROFILE` | `/dapi/auth/profile/` |
+| `AUTH_ONBOARDING` | `/dapi/auth/onboarding/` |
+| `AUTH_TOKEN_REFRESH` | `/dapi/auth/token/refresh/` |
+| `AUTH_OAUTH_PROVIDERS` | `/dapi/auth/oauth/providers/` |
+| `AUTH_OAUTH_START` | `/dapi/auth/oauth/{provider}/start/` |
+| `AUTH_OAUTH_CALLBACK` | `/dapi/auth/oauth/{provider}/callback/` |
+| `USERS` | `/dapi/users/` |
+| `USER_DETAIL` | `/dapi/users/{id}/` |
+| `USER_INVITATIONS` | `/dapi/users/invitations/` |
+| `USER_INVITATION_ACCEPT` | `/dapi/users/invitations/{token}/accept/` |
+| `USER_INVITATION_DECLINE` | `/dapi/users/invitations/{token}/decline/` |
+
+### Teams
+
+| Constant | Path |
+|---|---|
+| `TEAMS` | `/dapi/teams/` |
+| `TEAM_DETAIL` | `/dapi/teams/{id}/` |
+| `TEAM_MEMBERS` | `/dapi/teams/{id}/members/` |
+| `TEAM_MEMBER_DETAIL` | `/dapi/teams/{id}/members/{user_id}/` |
+| `TEAM_INVITATIONS` | `/dapi/teams/{id}/invitations/` |
+| `TEAM_INVITATION_ACCEPT` | `/dapi/teams/invitations/{token}/accept/` |
+| `TEAM_INVITATION_DECLINE` | `/dapi/teams/invitations/{token}/decline/` |
+
+### Platforms
+
+| Constant | Path |
+|---|---|
+| `PLATFORM_CATALOG` | `/dapi/platforms/catalog/` |
+| `PLATFORM_CATALOG_DETAIL` | `/dapi/platforms/catalog/{id}/` |
+| `PLATFORM_CONFIGS` | `/dapi/platforms/configs/` |
+| `PLATFORM_CONFIG_DETAIL` | `/dapi/platforms/configs/{id}/` |
+| `PLATFORM_CONNECT` | `/dapi/platforms/connect/` |
+| `PLATFORM_DISCONNECT` | `/dapi/platforms/disconnect/` |
+
+### Knowledge bases
+
+| Constant | Path |
+|---|---|
+| `KB_LIST` | `/dapi/knowledge-bases/` |
+| `KB_DETAIL` | `/dapi/knowledge-bases/{id}/` |
+| `KB_DOCUMENTS` | `/dapi/knowledge-bases/{id}/documents/` |
+| `KB_DOCUMENT_DETAIL` | `/dapi/knowledge-bases/{id}/documents/{doc_id}/` |
+| `KB_DOCUMENT_CHUNKS` | `/dapi/knowledge-bases/{id}/documents/{doc_id}/chunks/` |
+| `KB_DOMAINS` | `/dapi/knowledge-bases/{id}/domains/` |
+| `KB_DOMAIN_DETAIL` | `/dapi/knowledge-bases/{id}/domains/{domain_id}/` |
+| `KB_DOMAIN_CRAWL` | `/dapi/knowledge-bases/{id}/domains/{domain_id}/crawl/` |
+| `KB_STATS` | `/dapi/knowledge-bases/{id}/stats/` |
+| `KB_SEARCH` | `/dapi/knowledge-bases/{id}/search/` |
+| `AGENT_KB_STATS` | `/dapi/agents/{agent_id}/kb/stats/` |
+| `AGENT_KB_DOCUMENTS` | `/dapi/agents/{agent_id}/kb/documents/` |
+| `AGENT_KB_DOCUMENT_DETAIL` | `/dapi/agents/{agent_id}/kb/documents/{doc_id}/` |
+| `AGENT_KB_DOCUMENT_CHUNKS` | `/dapi/agents/{agent_id}/kb/documents/{doc_id}/chunks/` |
+| `AGENT_KB_DOMAINS` | `/dapi/agents/{agent_id}/kb/domains/` |
+| `AGENT_KB_DOMAIN_DETAIL` | `/dapi/agents/{agent_id}/kb/domains/{domain_id}/` |
+| `AGENT_KB_DOMAIN_CRAWL` | `/dapi/agents/{agent_id}/kb/domains/{domain_id}/crawl/` |
+| `AGENT_KB_SEARCH` | `/dapi/agents/{agent_id}/kb/search/` |
+| `AGENT_KB_TEST` | `/dapi/agents/{agent_id}/kb/test/` |
+| `AGENT_KB_ATTACHMENTS` | `/dapi/agents/{agent_id}/knowledge-bases/` |
+| `AGENT_KB_ATTACHMENT_DETAIL` | `/dapi/agents/{agent_id}/knowledge-bases/{attachment_id}/` |
+| `AGENT_KB_AVAILABLE` | `/dapi/agents/{agent_id}/knowledge-bases/available/` |
+
+### Memory
+
+| Constant | Path |
+|---|---|
+| `AGENT_MEMORIES` | `/dapi/agents/{agent_id}/memories/` |
+| `AGENT_MEMORY_DETAIL` | `/dapi/agents/{agent_id}/memories/{memory_id}/` |
+| `AGENT_MEMORY_SEARCH` | `/dapi/agents/{agent_id}/memories/search/` |
+| `AGENT_MEMORY_STATS` | `/dapi/agents/{agent_id}/memories/stats/` |
+| `USER_MEMORIES` | `/dapi/agents/{agent_id}/user-memories/` |
+| `USER_MEMORY_DETAIL` | `/dapi/agents/{agent_id}/user-memories/{memory_id}/` |
+| `USER_MEMORY_SEARCH` | `/dapi/agents/{agent_id}/user-memories/search/` |
+| `USER_MEMORY_STATS` | `/dapi/agents/{agent_id}/user-memories/stats/` |
+
+### Scheduling
+
+| Constant | Path |
+|---|---|
+| `BUILDER_AUTOMATIONS` | `/dapi/scheduling/builder-triggers/` |
+| `BUILDER_AUTOMATION_DETAIL` | `/dapi/scheduling/builder-triggers/{id}/` |
+| `BUILDER_AUTOMATION_RUNS` | `/dapi/scheduling/builder-triggers/{id}/runs/` |
+| `BUILDER_AUTOMATION_PAUSE` | `/dapi/scheduling/builder-triggers/{id}/pause/` |
+| `BUILDER_AUTOMATION_RESUME` | `/dapi/scheduling/builder-triggers/{id}/resume/` |
+| `BUILDER_AUTOMATION_RUN_NOW` | `/dapi/scheduling/builder-triggers/{id}/run_now/` |
+| `USER_SCHEDULES` | `/dapi/scheduling/user-tasks/` |
+| `USER_SCHEDULE_DETAIL` | `/dapi/scheduling/user-tasks/{id}/` |
+| `USER_SCHEDULE_RUNS` | `/dapi/scheduling/user-tasks/{id}/runs/` |
+| `USER_SCHEDULE_PAUSE` | `/dapi/scheduling/user-tasks/{id}/pause/` |
+| `USER_SCHEDULE_RESUME` | `/dapi/scheduling/user-tasks/{id}/resume/` |
+| `USER_SCHEDULE_RUN_NOW` | `/dapi/scheduling/user-tasks/{id}/run_now/` |
+
+### Assistant / Copilot
+
+| Constant | Path |
+|---|---|
+| `ASSISTANT_CHAT` | `/dapi/assistant/chat/` |
+| `ASSISTANT_CHAT_STREAM` | `/dapi/assistant/chat/stream/` |
+| `ASSISTANT_CONFIG` | `/dapi/assistant/config/` |
+| `ASSISTANT_SESSIONS` | `/dapi/assistant/sessions/` |
+| `ASSISTANT_SESSION_CREATE` | `/dapi/assistant/sessions/create/` |
+| `ASSISTANT_SESSION_DETAIL` | `/dapi/assistant/sessions/{id}/` |
+| `ASSISTANT_SESSION_STATE` | `/dapi/assistant/sessions/{id}/state/` |
+| `ASSISTANT_SESSION_STOP` | `/dapi/assistant/sessions/{id}/stop/` |
+| `ASSISTANT_SESSION_RETRY` | `/dapi/assistant/sessions/{id}/retry/` |
+| `ASSISTANT_SESSION_EVENTS` | `/dapi/assistant/sessions/{id}/events/` |
+| `ASSISTANT_SESSION_EVENT_DETAIL` | `/dapi/assistant/sessions/{id}/events/{event_id}/` |
+| `ASSISTANT_SESSION_EVENT_REGENERATE` | `/dapi/assistant/sessions/{id}/events/{event_id}/regenerate/` |
+| `ASSISTANT_SESSION_EVENT_FEEDBACK` | `/dapi/assistant/sessions/{id}/events/{event_id}/feedback/` |
+| `ASSISTANT_ANALYTICS` | `/dapi/assistant/analytics/` |
+
+### Agents, MCP, HTTP API tools, LLM
+
+| Constant | Path |
+|---|---|
+| `AGENTS` | `/dapi/agents/` |
+| `AGENT_DETAIL` | `/dapi/agents/{id}/` |
+| `AGENT_PREVIEW` | `/dapi/agents/{id}/preview/` |
+| `MCP_SERVERS` | `/dapi/mcp/servers/` |
+| `MCP_SERVER_DETAIL` | `/dapi/mcp/servers/{id}/` |
+| `MCP_CONNECTIONS` | `/dapi/mcp/connections/` |
+| `MCP_CONNECTION_DETAIL` | `/dapi/mcp/connections/{id}/` |
+| `MCP_OAUTH_INITIATE` | `/dapi/mcp/connections/{id}/oauth/initiate/` |
+| `HTTP_API_TOOLS` | `/dapi/http-api/tools/` |
+| `HTTP_API_TOOL_DETAIL` | `/dapi/http-api/tools/{id}/` |
+| `HTTP_API_CONNECTIONS` | `/dapi/http-api/connections/` |
+| `HTTP_API_CONNECTION_DETAIL` | `/dapi/http-api/connections/{id}/` |
+| `HTTP_API_CONNECTION_EXECUTE` | `/dapi/http-api/connections/{id}/execute/` |
+| `HTTP_API_OAUTH_INITIATE` | `/dapi/http-api/connections/{id}/oauth/initiate/` |
+| `LLM_PROVIDERS` | `/dapi/llm/providers/` |
+| `LLM_PROVIDER_DETAIL` | `/dapi/llm/providers/{id}/` |
+| `LLM_PROVIDER_MODELS` | `/dapi/llm/providers/{id}/models/` |
+| `LLM_PROVIDER_CONFIGS` | `/dapi/llm/configs/` |
+| `LLM_PROVIDER_CONFIG_DETAIL` | `/dapi/llm/configs/{id}/` |
+
+<Note>
+  Several `/dapi/` collection/detail paths are inferred from REST convention in the SDK endpoint registry (agents, MCP, HTTP API tools, LLM). Confirm verbs against the backend before publishing playground pages for those routes.
+</Note>

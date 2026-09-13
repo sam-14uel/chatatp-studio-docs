@@ -1,7 +1,6 @@
 /**
  * Mintlify-style docs copilot built on @chatatp/studio ChatATPClient.
  * Drop this file (and chatatp-copilot.css) in the Mintlify docs root.
- * Mintlify auto-loads every .js / .css file in the content directory.
  */
 (function () {
   if (window.__chatatpCopilotLoaded) return;
@@ -37,39 +36,95 @@
   };
 
   const USER_KEY = "catp.docs.user";
-  const CONV_KEY = "catp.docs.conversation";
+  const THREADS_KEY = "catp.docs.threads";
+  const ACTIVE_KEY = "catp.docs.active";
 
-  const sparkle = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.4 5.2L18 9.6l-4.6 1.4L12 16l-1.4-4.99L6 9.6l4.6-1.4L12 3z"/><path d="M18.5 14.5l.6 2.2 2.2.6-2.2.6-.6 2.2-.6-2.2-2.2-.6 2.2-.6.6-2.2z"/></svg>`;
-  const closeIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
-  const plusIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`;
-  const sendIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h12M13 6l6 6-6 6"/></svg>`;
+  const ICONS = {
+    sparkle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.4 5.2L18 9.6l-4.6 1.4L12 16l-1.4-4.99L6 9.6l4.6-1.4L12 3z"/><path d="M18.5 14.5l.6 2.2 2.2.6-2.2.6-.6 2.2-.6-2.2-2.2-.6 2.2-.6.6-2.2z"/></svg>`,
+    close: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
+    plus: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`,
+    send: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h12M13 6l6 6-6 6"/></svg>`,
+    history: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h16"/></svg>`,
+    chevron: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg>`,
+    check: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>`,
+    fail: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>`,
+    spin: `<span class="catp-spin" aria-hidden="true"></span>`,
+  };
 
   const state = {
     open: false,
+    view: "chat",
     busy: false,
     typing: false,
     client: null,
-    conversationId: Number(localStorage.getItem(CONV_KEY) || 0) || null,
-    userId: localStorage.getItem(USER_KEY) || createUserId(),
+    visitorId: localStorage.getItem(USER_KEY) || createId("docs"),
+    threadId: localStorage.getItem(ACTIVE_KEY) || createId("t"),
+    conversationId: null,
     messages: [],
+    threads: loadThreads(),
   };
-  localStorage.setItem(USER_KEY, state.userId);
+  localStorage.setItem(USER_KEY, state.visitorId);
+
+  const active = state.threads.find((t) => t.id === state.threadId);
+  if (active) state.conversationId = active.conversationId || null;
+  else persistActive();
 
   const els = {};
 
-  function createUserId() {
-    const id =
-      "docs_" +
-      (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
-    return id.slice(0, 64);
+  function createId(prefix) {
+    const raw = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random();
+    return `${prefix}_${String(raw).replace(/-/g, "").slice(0, 16)}`;
+  }
+
+  function threadUserId(threadId) {
+    return `${state.visitorId}::${threadId}`;
+  }
+
+  function loadThreads() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(THREADS_KEY) || "[]");
+      return Array.isArray(raw) ? raw : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveThreads() {
+    localStorage.setItem(THREADS_KEY, JSON.stringify(state.threads.slice(0, 40)));
+    localStorage.setItem(ACTIVE_KEY, state.threadId);
+  }
+
+  function persistActive() {
+    const preview = firstUserText() || "New chat";
+    const existing = state.threads.find((t) => t.id === state.threadId);
+    const entry = {
+      id: state.threadId,
+      conversationId: state.conversationId,
+      title: preview.slice(0, 48),
+      preview: lastVisibleText(),
+      updatedAt: Date.now(),
+    };
+    if (existing) Object.assign(existing, entry);
+    else state.threads.unshift(entry);
+    state.threads.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    saveThreads();
+  }
+
+  function firstUserText() {
+    const msg = state.messages.find((m) => m.role === "user");
+    return msg ? String(msg.content || "").trim() : "";
+  }
+
+  function lastVisibleText() {
+    for (let i = state.messages.length - 1; i >= 0; i -= 1) {
+      const text = String(state.messages[i].content || "").trim();
+      if (text) return text.slice(0, 80);
+    }
+    return "";
   }
 
   function pageContext() {
-    return {
-      url: location.href,
-      path: location.pathname,
-      title: document.title,
-    };
+    return { url: location.href, path: location.pathname, title: document.title };
   }
 
   function escapeHtml(value) {
@@ -78,6 +133,22 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  function pretty(value) {
+    if (value == null || value === "") return "—";
+    if (typeof value === "string") {
+      try {
+        return JSON.stringify(JSON.parse(value), null, 2);
+      } catch {
+        return value;
+      }
+    }
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch {
+      return String(value);
+    }
   }
 
   function renderMarkdown(text) {
@@ -97,6 +168,29 @@
       .join("");
   }
 
+  function statusIcon(status) {
+    if (status === "running") return ICONS.spin;
+    if (status === "failed") return ICONS.fail;
+    return ICONS.check;
+  }
+
+  function normalizeTool(raw, fallbackStatus) {
+    const ok = raw.ok !== false && raw.status !== "error" && raw.status !== "failed";
+    let status = fallbackStatus || raw.status;
+    if (status === "started") status = "running";
+    if (status === "completed" || status === "success") status = ok ? "success" : "failed";
+    if (status === "error") status = "failed";
+    if (!status) status = ok ? "success" : "running";
+    return {
+      id: String(raw.id || raw.tool_call_id || raw.name || Math.random()),
+      name: raw.name || raw.tool || "tool",
+      request: raw.arguments ?? raw.args ?? raw.request ?? {},
+      response: raw.result ?? raw.response ?? raw.output ?? "",
+      status,
+      open: Boolean(raw.open),
+    };
+  }
+
   function mount() {
     if (document.getElementById("catp-root")) return;
 
@@ -105,7 +199,7 @@
     root.innerHTML = `
       <div class="catp-float-wrap" id="catp-float">
         <div class="catp-float">
-          <span class="catp-float-icon">${sparkle}</span>
+          <span class="catp-float-icon">${ICONS.sparkle}</span>
           <input class="catp-float-input" id="catp-float-input" placeholder="${escapeHtml(
       CONFIG.placeholder
     )}" autocomplete="off" />
@@ -115,12 +209,13 @@
       </div>
       <aside class="catp-sidebar" id="catp-sidebar" role="complementary" aria-label="ChatATP Copilot">
         <header class="catp-head">
+          <button type="button" class="catp-icon-btn" id="catp-history" title="Recent chats">${ICONS.history}</button>
           <div class="catp-head-title">
             <strong>${escapeHtml(CONFIG.title)}</strong>
             <span id="catp-status">${escapeHtml(CONFIG.subtitle)}</span>
           </div>
-          <button type="button" class="catp-icon-btn" id="catp-new" title="New chat">${plusIcon}</button>
-          <button type="button" class="catp-icon-btn" id="catp-close" title="Close">${closeIcon}</button>
+          <button type="button" class="catp-icon-btn" id="catp-new" title="New chat">${ICONS.plus}</button>
+          <button type="button" class="catp-icon-btn" id="catp-close" title="Close">${ICONS.close}</button>
         </header>
         <div class="catp-messages" id="catp-messages"></div>
         <form class="catp-composer" id="catp-form">
@@ -128,7 +223,7 @@
             <textarea id="catp-input" rows="1" placeholder="${escapeHtml(
       CONFIG.placeholder
     )}"></textarea>
-            <button type="submit" class="catp-send" id="catp-send" disabled>${sendIcon}</button>
+            <button type="submit" class="catp-send" id="catp-send" disabled>${ICONS.send}</button>
           </div>
           <div class="catp-disclaimer">Answers can be wrong. Check the docs when it matters.</div>
           <div class="catp-powered">Powered by <a href="https://studio.chat-atp.com" target="_blank" rel="noreferrer">ChatATP Studio</a></div>
@@ -146,9 +241,11 @@
     els.form = document.getElementById("catp-form");
     els.send = document.getElementById("catp-send");
     els.status = document.getElementById("catp-status");
+    els.composer = els.form;
 
     document.getElementById("catp-close").addEventListener("click", close);
     document.getElementById("catp-new").addEventListener("click", resetChat);
+    document.getElementById("catp-history").addEventListener("click", toggleHistory);
     els.floatSend.addEventListener("click", submitFromFloat);
     els.floatInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
@@ -165,16 +262,20 @@
       els.input.style.height = Math.min(els.input.scrollHeight, 140) + "px";
       els.send.disabled = state.busy || !els.input.value.trim();
     });
+    els.messages.addEventListener("click", onMessageClick);
 
     window.addEventListener("keydown", (event) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "i") {
         event.preventDefault();
         state.open ? close() : open();
       }
-      if (event.key === "Escape" && state.open) close();
+      if (event.key === "Escape" && state.open) {
+        if (state.view === "history") showChat();
+        else close();
+      }
     });
 
-    renderMessages();
+    render();
     injectAskButton();
   }
 
@@ -185,23 +286,13 @@
       document.querySelector("[data-search]") ||
       document.querySelector("header nav");
     if (!search) return;
-
     const button = document.createElement("button");
     button.type = "button";
     button.id = "catp-ask-btn";
     button.className = "catp-ask-btn";
-    button.innerHTML = `${sparkle}<span class="catp-ask-btn-label">Ask Copilot</span><span class="catp-kbd">⌘I</span>`;
+    button.innerHTML = `${ICONS.sparkle}<span class="catp-ask-btn-label">Ask Copilot</span><span class="catp-kbd">⌘I</span>`;
     button.addEventListener("click", () => (state.open ? close() : open()));
-
-    const parent = search.parentElement || search;
-    parent.appendChild(button);
-  }
-
-  function setTyping(on, label) {
-    state.typing = on;
-    if (!els.status) return;
-    els.status.textContent = on ? label || "Typing…" : CONFIG.subtitle;
-    els.status.classList.toggle("typing", on);
+    (search.parentElement || search).appendChild(button);
   }
 
   function open(prefill) {
@@ -215,23 +306,119 @@
 
   function close() {
     state.open = false;
+    state.view = "chat";
     els.sidebar.classList.remove("open");
     els.float.classList.remove("catp-hidden");
+    render();
   }
 
-  function resetChat() {
-    state.conversationId = null;
-    state.messages = [];
-    localStorage.removeItem(CONV_KEY);
-    renderMessages();
+  function toggleHistory() {
+    state.view = state.view === "history" ? "chat" : "history";
+    render();
+  }
+
+  function showChat() {
+    state.view = "chat";
+    render();
     els.input.focus();
   }
 
-  function renderMessages() {
+  function resetChat() {
+    persistActive();
+    state.threadId = createId("t");
+    state.conversationId = null;
+    state.messages = [];
+    state.view = "chat";
+    persistActive();
+    render();
+    els.input.focus();
+  }
+
+  function setTyping(on) {
+    state.typing = on;
+    if (els.status) els.status.textContent = CONFIG.subtitle;
+  }
+
+  function currentAgent() {
+    for (let i = state.messages.length - 1; i >= 0; i -= 1) {
+      if (state.messages[i].role === "agent") return state.messages[i];
+    }
+    return null;
+  }
+
+  function upsertTool(payload, status) {
+    let agent = currentAgent();
+    if (!agent) {
+      agent = { role: "agent", content: "", tools: [] };
+      state.messages.push(agent);
+    }
+    agent.tools = agent.tools || [];
+    const next = normalizeTool(payload, status);
+    const index = agent.tools.findIndex((tool) => tool.id === next.id || tool.name === next.name);
+    if (index >= 0) agent.tools[index] = { ...agent.tools[index], ...next, open: agent.tools[index].open };
+    else agent.tools.push(next);
+  }
+
+  function renderTool(tool, messageIndex, toolIndex) {
+    const open = tool.open ? "open" : "";
+    return `
+      <div class="catp-tool ${tool.status} ${open}" data-msg="${messageIndex}" data-tool="${toolIndex}">
+        <button type="button" class="catp-tool-head" data-toggle-tool="${messageIndex}:${toolIndex}">
+          <span class="catp-tool-caret">${ICONS.chevron}</span>
+          <span class="catp-tool-name">${escapeHtml(tool.name)}</span>
+          <span class="catp-tool-status" title="${tool.status}">${statusIcon(tool.status)}</span>
+        </button>
+        <div class="catp-tool-body">
+          <div class="catp-tool-pane">
+            <div class="catp-tool-label">Request</div>
+            <pre>${escapeHtml(pretty(tool.request))}</pre>
+          </div>
+          <div class="catp-tool-pane">
+            <div class="catp-tool-label">Response</div>
+            <pre>${escapeHtml(tool.status === "running" ? "Running…" : pretty(tool.response))}</pre>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHistory() {
+    if (!state.threads.length) {
+      els.messages.innerHTML = `
+        <div class="catp-empty">
+          <div class="catp-empty-mark">${ICONS.history}</div>
+          <h3>No chats yet</h3>
+          <p>Ask something and it will show up here.</p>
+        </div>
+      `;
+      return;
+    }
+    els.messages.innerHTML = `
+      <div class="catp-history">
+        <div class="catp-history-label">Recent chats</div>
+        ${state.threads
+        .map((thread) => {
+          const when = thread.updatedAt
+            ? new Date(thread.updatedAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+            : "";
+          return `
+              <button type="button" class="catp-thread ${thread.id === state.threadId ? "active" : ""}" data-thread="${thread.id}">
+                <strong>${escapeHtml(thread.title || "New chat")}</strong>
+                <small>${escapeHtml(thread.preview || "No messages yet")}</small>
+                <em>${escapeHtml(when)}</em>
+              </button>
+            `;
+        })
+        .join("")}
+      </div>
+    `;
+  }
+
+  function renderChat() {
     if (!state.messages.length) {
       els.messages.innerHTML = `
         <div class="catp-empty">
-          <div class="catp-empty-mark">${sparkle}</div>
+          <div class="catp-empty-mark">${ICONS.sparkle}</div>
           <h3>${escapeHtml(CONFIG.emptyHeading)}</h3>
           <p>${escapeHtml(CONFIG.emptySubheading)}</p>
           <div class="catp-starters">
@@ -247,40 +434,86 @@
           </div>
         </div>
       `;
-      els.messages.querySelectorAll("[data-starter]").forEach((button) => {
-        button.addEventListener("click", () => {
-          const item = CONFIG.starters[Number(button.dataset.starter)];
-          submit(item.prompt);
-        });
-      });
       return;
     }
 
     els.messages.innerHTML = state.messages
-      .map((message) => {
-        if (message.role === "tool") {
-          return `<div class="catp-tools">${escapeHtml(message.content)}</div>`;
+      .map((message, index) => {
+        if (message.role === "user") {
+          return `<div class="catp-row user"><div class="catp-bubble">${escapeHtml(message.content)}</div></div>`;
         }
-        const avatar =
-          message.role === "agent"
-            ? `<div class="catp-avatar">${sparkle}</div>`
-            : "";
-        const typing =
-          message.role === "agent" && !message.content && state.typing;
+        const tools = (message.tools || []).map((tool, toolIndex) => renderTool(tool, index, toolIndex)).join("");
+        const typing = !message.content && state.typing;
         const body = typing
-          ? `<div class="catp-typing"><span class="catp-dots"><i></i><i></i><i></i></span><span class="catp-typing-label">Typing…</span></div>`
-          : message.role === "agent"
-            ? renderMarkdown(message.content)
-            : escapeHtml(message.content);
+          ? `<div class="catp-typing"><span class="catp-dots"><i></i><i></i><i></i></span></div>`
+          : renderMarkdown(message.content);
         return `
-          <div class="catp-row ${message.role}">
-            ${avatar}
-            <div class="catp-bubble">${body}</div>
+          <div class="catp-row agent">
+            <div class="catp-avatar">${ICONS.sparkle}</div>
+            <div class="catp-col">
+              ${tools}
+              ${message.content || typing ? `<div class="catp-bubble">${body}</div>` : ""}
+            </div>
           </div>
         `;
       })
       .join("");
     els.messages.scrollTop = els.messages.scrollHeight;
+  }
+
+  function render() {
+    if (!els.messages) return;
+    els.composer.classList.toggle("catp-hidden", state.view === "history");
+    if (state.view === "history") renderHistory();
+    else renderChat();
+  }
+
+  function onMessageClick(event) {
+    const starter = event.target.closest("[data-starter]");
+    if (starter) {
+      submit(CONFIG.starters[Number(starter.dataset.starter)].prompt);
+      return;
+    }
+    const thread = event.target.closest("[data-thread]");
+    if (thread) {
+      openThread(thread.dataset.thread);
+      return;
+    }
+    const toggle = event.target.closest("[data-toggle-tool]");
+    if (toggle) {
+      const [msgIndex, toolIndex] = toggle.dataset.toggleTool.split(":").map(Number);
+      const tool = state.messages[msgIndex]?.tools?.[toolIndex];
+      if (tool) {
+        tool.open = !tool.open;
+        render();
+      }
+    }
+  }
+
+  async function openThread(threadId) {
+    const thread = state.threads.find((item) => item.id === threadId);
+    if (!thread) return;
+    state.threadId = thread.id;
+    state.conversationId = thread.conversationId || null;
+    state.view = "chat";
+    saveThreads();
+    state.messages = [];
+    render();
+    if (!thread.conversationId) return;
+    try {
+      const client = await ensureClient();
+      const page = await client.messages.list(thread.conversationId);
+      const rows = page.toArray ? await page.toArray() : page.data || page || [];
+      state.messages = (rows || []).map((row) => ({
+        role: row.sender === "user" ? "user" : "agent",
+        content: row.content || "",
+        tools: Array.isArray(row.tool_calls) ? row.tool_calls.map((tool) => normalizeTool(tool, "success")) : [],
+      }));
+      persistActive();
+      render();
+    } catch (error) {
+      console.warn("Could not load conversation", error);
+    }
   }
 
   function submitFromFloat() {
@@ -294,98 +527,105 @@
 
   async function ensureClient() {
     if (state.client) return state.client;
-    const mod = await import(
-      `https://esm.sh/@chatatp/studio@${CONFIG.sdkVersion}?bundle`
-    );
+    const mod = await import(`https://esm.sh/@chatatp/studio@${CONFIG.sdkVersion}?bundle`);
     const Client = mod.ChatATPClient || mod.default?.ChatATPClient || mod.default;
-    state.client = new Client({
-      apiKey: CONFIG.apiKey,
-      baseUrl: CONFIG.baseUrl,
-    });
+    state.client = new Client({ apiKey: CONFIG.apiKey, baseUrl: CONFIG.baseUrl });
     return state.client;
   }
 
   function extractDelta(data) {
     if (data == null) return "";
     if (typeof data === "string") return data;
-    return data.text || data.content || data.delta || "";
+    return data.delta || data.text || data.content || "";
+  }
+
+  function captureConversation(event) {
+    const id =
+      event?.conversation?.id ||
+      event?.data?.conversation_id ||
+      event?.data?.conversation?.id;
+    if (!id) return;
+    state.conversationId = Number(id);
+    persistActive();
   }
 
   async function submit(raw) {
     const text = String(raw || "").trim();
     if (!text || state.busy) return;
 
+    state.view = "chat";
     state.busy = true;
     els.send.disabled = true;
     els.input.value = "";
     els.input.style.height = "auto";
-    setTyping(true, "Typing…");
+    setTyping(true);
 
     state.messages.push({ role: "user", content: text });
-    state.messages.push({ role: "agent", content: "" });
-    renderMessages();
+    state.messages.push({ role: "agent", content: "", tools: [] });
+    persistActive();
+    render();
     open();
 
     const context = pageContext();
-    const prompt =
-      `The user is reading ${context.title} (${context.path}).\n\n` + text;
+    const prompt = `The user is reading ${context.title} (${context.path}).\n\n${text}`;
 
     try {
       const client = await ensureClient();
-      for await (const event of client.chatStream({
-        agent_id: CONFIG.agentId,
-        external_user_id: state.userId,
-        user_display_name: "Docs visitor",
-        message: prompt,
-        metadata: { source: "mintlify-docs", ...context },
-      })) {
-        if (event?.conversation?.id) {
-          state.conversationId = event.conversation.id;
-          localStorage.setItem(CONV_KEY, String(state.conversationId));
-        }
+      const stream = state.conversationId
+        ? client.messages.stream(state.conversationId, { content: prompt })
+        : client.chatStream({
+          agent_id: CONFIG.agentId,
+          external_user_id: threadUserId(state.threadId),
+          user_display_name: "Docs visitor",
+          message: prompt,
+          metadata: { source: "mintlify-docs", thread_id: state.threadId, ...context },
+        });
+
+      for await (const event of stream) {
+        captureConversation(event);
         if (event.type === "tool.execution.started") {
-          const name = event.data?.name || event.data?.tool || "tool";
-          setTyping(true, `Using ${name}…`);
-          state.messages.push({ role: "tool", content: `Using ${name}…` });
-          renderMessages();
+          upsertTool(event.data || {}, "running");
+          render();
+        }
+        if (event.type === "tool.execution.completed") {
+          upsertTool(event.data || {}, event.data?.ok === false ? "failed" : "success");
+          render();
         }
         if (event.type === "agent.response.delta") {
-          const last = state.messages[state.messages.length - 1];
-          if (last?.role === "agent") last.content += extractDelta(event.data);
-          if (last?.content) setTyping(true, "Typing…");
-          renderMessages();
+          const last = currentAgent();
+          if (last) last.content += extractDelta(event.data);
+          render();
         }
         if (event.type === "agent.response.completed") {
-          const last = state.messages[state.messages.length - 1];
+          const last = currentAgent();
           const finalText =
-            extractDelta(event.data) ||
-            event.data?.agent_message?.content ||
-            last.content;
-          if (last?.role === "agent") last.content = finalText;
+            extractDelta(event.data) || event.data?.agent_message?.content || last?.content;
+          if (last) last.content = finalText || last.content;
+          if (Array.isArray(event.data?.tool_calls)) {
+            event.data.tool_calls.forEach((tool) => upsertTool(tool, "success"));
+          }
           setTyping(false);
-          renderMessages();
+          persistActive();
+          render();
         }
         if (event.type === "error") {
-          throw new Error(extractDelta(event.data) || "The agent could not answer.");
+          throw new Error(extractDelta(event.data) || event.data?.message || "The agent could not answer.");
         }
       }
 
-      const last = state.messages[state.messages.length - 1];
-      if (last?.role === "agent" && !last.content) {
+      const last = currentAgent();
+      if (last && !last.content && !(last.tools || []).length) {
         last.content = "I could not generate a reply. Try asking again.";
-        renderMessages();
       }
     } catch (error) {
-      const last = state.messages[state.messages.length - 1];
-      if (last?.role === "agent") {
-        last.content = error?.message || "Something went wrong talking to the support agent.";
-        renderMessages();
-      }
+      const last = currentAgent();
+      if (last) last.content = error?.message || "Something went wrong talking to the support agent.";
     } finally {
       state.busy = false;
       setTyping(false);
       els.send.disabled = !els.input.value.trim();
-      renderMessages();
+      persistActive();
+      render();
     }
   }
 
@@ -394,11 +634,8 @@
     injectAskButton();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
-  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
 
   const observer = new MutationObserver(() => injectAskButton());
   observer.observe(document.documentElement, { childList: true, subtree: true });

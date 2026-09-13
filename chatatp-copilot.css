@@ -279,6 +279,15 @@ html.dark,
   font-size: 12px;
 }
 
+.catp-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 86%;
+  min-width: 0;
+  flex: 1;
+}
+
 .catp-row {
   display: flex;
   gap: 10px;
@@ -301,7 +310,7 @@ html.dark,
 }
 
 .catp-bubble {
-  max-width: 86%;
+  max-width: 100%;
   padding: 10px 12px;
   border-radius: 14px;
   font-size: 14px;
@@ -345,22 +354,162 @@ html.dark,
   color: var(--catp-accent);
 }
 
-.catp-tools {
+.catp-tool {
+  border: 1px solid var(--catp-line);
+  border-radius: 12px;
+  background: var(--catp-surface);
+  overflow: hidden;
+}
+
+.catp-tool.failed {
+  border-color: #fecaca;
+}
+
+.catp-tool-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 0;
+  background: var(--catp-surface-2);
+  color: inherit;
+  font: inherit;
   font-size: 12px;
-  color: var(--gray-500, #64748b);
-  margin: 0 0 8px 36px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.catp-tool-caret {
+  display: grid;
+  place-items: center;
+  color: var(--catp-muted);
+  transition: transform 160ms ease;
+}
+
+.catp-tool.open .catp-tool-caret {
+  transform: rotate(90deg);
+}
+
+.catp-tool-name {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.catp-tool-status {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.catp-tool-body {
+  display: none;
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--catp-line);
+}
+
+.catp-tool.open .catp-tool-body {
+  display: grid;
+  gap: 8px;
+}
+
+.catp-tool-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--catp-muted);
+  margin-bottom: 4px;
+}
+
+.catp-tool-pane pre {
+  margin: 0;
+  max-height: 160px;
+  overflow: auto;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--catp-surface-2);
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.catp-spin {
+  width: 11px;
+  height: 11px;
+  border: 2px solid #c7d2fe;
+  border-top-color: var(--catp-accent);
+  border-radius: 50%;
+  display: block;
+  animation: catp-spin 0.7s linear infinite;
+}
+
+@keyframes catp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.catp-history {
+  display: grid;
+  gap: 8px;
+}
+
+.catp-history-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--catp-muted);
+  padding: 0 2px 4px;
+}
+
+.catp-thread {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--catp-line);
+  border-radius: 12px;
+  background: var(--catp-surface-2);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.catp-thread:hover,
+.catp-thread.active {
+  border-color: var(--catp-accent);
+}
+
+.catp-thread strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.catp-thread small,
+.catp-thread em {
+  font-size: 12px;
+  font-style: normal;
+  color: var(--catp-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .catp-typing {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 20px;
-}
-
-.catp-typing-label {
-  font-size: 13px;
-  color: var(--catp-muted);
+  min-height: 18px;
 }
 
 .catp-dots {

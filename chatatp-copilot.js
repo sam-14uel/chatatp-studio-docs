@@ -102,12 +102,15 @@
     const root = document.createElement("div");
     root.id = "catp-root";
     root.innerHTML = `
-      <div class="catp-float" id="catp-float">
-        <span class="catp-float-icon">${sparkle}</span>
-        <input class="catp-float-input" id="catp-float-input" placeholder="${escapeHtml(
+      <div class="catp-float-wrap" id="catp-float">
+        <div class="catp-float">
+          <span class="catp-float-icon">${sparkle}</span>
+          <input class="catp-float-input" id="catp-float-input" placeholder="${escapeHtml(
       CONFIG.placeholder
     )}" autocomplete="off" />
-        <button type="button" class="catp-float-send" id="catp-float-send">Ask Copilot</button>
+          <button type="button" class="catp-float-send" id="catp-float-send">Ask Copilot</button>
+        </div>
+        <div class="catp-float-powered">Powered by <a href="https://studio.chat-atp.com" target="_blank" rel="noreferrer">ChatATP Studio</a></div>
       </div>
       <aside class="catp-sidebar" id="catp-sidebar" role="complementary" aria-label="ChatATP Copilot">
         <header class="catp-head">

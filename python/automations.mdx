@@ -1,0 +1,29 @@
+---
+title: Automations
+description: Manage builder automations with the Python SDK
+---
+
+Use `client.automations` to manage scheduled builder automations for an Agent.
+
+```python
+from chatatp_studio import ChatATPClient
+
+async with ChatATPClient(api_key="chatatp_sk_...") as client:
+    automation = await client.automations.create(
+        agent_id=7,
+        name="Daily follow-up",
+        prompt_text="Review unresolved conversations and follow up.",
+        schedule_type="daily",
+        schedule_config={"time": "09:00"},
+        timezone="UTC",
+    )
+
+    current = await client.automations.retrieve(automation["id"])
+    await client.automations.pause(automation["id"])
+    await client.automations.resume(automation["id"])
+    await client.automations.run_now(automation["id"])
+    runs = await client.automations.runs(automation["id"])
+    await client.automations.delete(automation["id"])
+```
+
+Automation responses include `status`, `enabled`, and `next_run_at`.

@@ -22,11 +22,7 @@
             "pages": [
               "introduction",
               "quickstart",
-              "cli/overview",
-              "knowledge-base",
-              "memory",
-              "automation",
-              "scheduling"
+              "cli/overview"
             ]
           }
         ]
@@ -53,6 +49,10 @@
               "js/agents",
               "js/conversations",
               "js/messages",
+              "js/knowledge-bases",
+              "js/memory",
+              "js/automations",
+              "js/schedules",
               "js/streaming",
               "js/pagination",
               "js/errors"
@@ -76,6 +76,10 @@
               "python/agents",
               "python/conversations",
               "python/messages",
+              "python/knowledge-bases",
+              "python/memory",
+              "python/automations",
+              "python/schedules",
               "python/streaming",
               "python/pagination",
               "python/errors"

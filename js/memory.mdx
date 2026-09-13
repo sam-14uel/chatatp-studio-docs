@@ -1,0 +1,46 @@
+---
+title: Memory
+description: Manage agent and user memories with the JavaScript SDK
+---
+
+Use `client.memories` for Agent memory and per-user memory.
+
+## Create and list Agent memory
+
+```typescript
+import { ChatATPClient } from "@chatatp/studio";
+
+const client = new ChatATPClient({ apiKey: "chatatp_sk_..." });
+
+const memory = await client.memories.create(7, {
+  title: "Preferred response style",
+  content: "The user prefers concise answers.",
+  memory_type: "preference",
+  importance: 1.0,
+});
+
+const memories = await client.memories.list(7);
+```
+
+Memory indexing is asynchronous. Inspect each memory's `status`, `chunk_count`, and `error_message`.
+
+## Per-user memory and search
+
+```typescript
+await client.memories.create(7, {
+  title: "Subscription plan",
+  content: "The user is on the Pro plan.",
+  agent_user_id: 42,
+  memory_type: "fact",
+});
+
+const result = await client.memories.search(
+  7,
+  42,
+  "What plan is the user on?",
+  5,
+);
+console.log(result.context, result.has_context);
+```
+
+For the equivalent Studio CLI workflow, see the Memory section in the [CLI overview](/docs/cli/overview).

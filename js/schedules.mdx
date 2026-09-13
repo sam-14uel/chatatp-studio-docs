@@ -1,0 +1,28 @@
+---
+title: Scheduling
+description: Manage end-user schedules with the JavaScript SDK
+---
+
+Use `client.schedules` for conversation-scoped end-user schedules.
+
+```typescript
+import { ChatATPClient } from "@chatatp/studio";
+
+const client = new ChatATPClient({ apiKey: "chatatp_sk_..." });
+
+const schedule = await client.schedules.create(7, 91, {
+  title: "Send renewal reminder",
+  prompt_text: "Remind the user about their renewal date.",
+  schedule_type: "one_time",
+  schedule_config: { run_at: "2026-10-01T09:00:00Z" },
+});
+
+const current = await client.schedules.retrieve(schedule.id);
+await client.schedules.pause(schedule.id);
+await client.schedules.resume(schedule.id);
+await client.schedules.runNow(schedule.id);
+const runs = await client.schedules.runs(schedule.id);
+await client.schedules.delete(schedule.id);
+```
+
+Schedule responses include `status`, `enabled`, and `next_run_at`.

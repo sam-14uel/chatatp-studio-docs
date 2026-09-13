@@ -1,0 +1,67 @@
+---
+title: Knowledge Bases
+description: Manage knowledge bases with the Python SDK
+---
+
+Use `client.knowledge_bases` to create, populate, search, and attach knowledge bases to Agents.
+
+## Create a knowledge base
+
+```python
+from chatatp_studio import ChatATPClient
+
+async with ChatATPClient(api_key="chatatp_sk_...") as client:
+    knowledge_base = await client.knowledge_bases.create(
+        "Product docs",
+        description="Support documentation",
+        agent_id=7,  # optional: attach while creating
+    )
+```
+
+## Upload and monitor documents
+
+```python
+await client.knowledge_bases.upload(
+    knowledge_base["id"],
+    "./manual.pdf",
+)
+
+documents = await client.knowledge_bases.documents(knowledge_base["id"])
+stats = await client.knowledge_bases.stats(knowledge_base["id"])
+
+for document in documents["data"]:
+    print(document["name"], document["status"], document["chunk_count"])
+```
+
+Indexing is asynchronous. Poll documents until their status is `indexed` or `failed`. Document responses include `chunk_count`, `char_count`, and `error_message`.
+
+## Index URLs and search
+
+```python
+await client.knowledge_bases.add_url(
+    knowledge_base["id"],
+    "https://docs.example.com",
+)
+
+result = await client.knowledge_bases.search(
+    knowledge_base["id"],
+    "How do I reset my password?",
+    top_k=5,
+)
+print(result["context"], result["has_context"])
+```
+
+## Attach to an Agent
+
+```python
+await client.knowledge_bases.attach(
+    7,
+    knowledge_base["id"],
+    enabled=True,
+    auto_context=True,
+    max_context_chunks=5,
+    context_threshold=0.3,
+)
+```
+
+For the equivalent Studio CLI workflow, see the Knowledge Base section in the [CLI overview](/docs/cli/overview).

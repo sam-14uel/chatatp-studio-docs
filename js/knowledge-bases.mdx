@@ -1,0 +1,62 @@
+---
+title: Knowledge Bases
+description: Manage knowledge bases with the JavaScript SDK
+---
+
+Use `client.knowledgeBases` to create, populate, search, and attach knowledge bases to Agents.
+
+## Create a knowledge base
+
+```typescript
+import { ChatATPClient } from "@chatatp/studio";
+
+const client = new ChatATPClient({ apiKey: "chatatp_sk_..." });
+
+const knowledgeBase = await client.knowledgeBases.create({
+  name: "Product docs",
+  description: "Support documentation",
+  agent_id: 7, // optional: attach while creating
+});
+```
+
+## Upload and monitor documents
+
+```typescript
+const file = new Blob(["Product information"], { type: "text/plain" });
+await client.knowledgeBases.upload(knowledgeBase.id, file, "product.txt");
+
+const documents = await client.knowledgeBases.documents(knowledgeBase.id);
+const stats = await client.knowledgeBases.stats(knowledgeBase.id);
+console.log(documents, stats);
+```
+
+Indexing is asynchronous. Poll documents until their status is `indexed` or `failed`. Document responses include `chunk_count`, `char_count`, and `error_message`.
+
+## Index URLs and search
+
+```typescript
+await client.knowledgeBases.addUrl(
+  knowledgeBase.id,
+  "https://docs.example.com",
+);
+
+const result = await client.knowledgeBases.search(
+  knowledgeBase.id,
+  "How do I reset my password?",
+  5,
+);
+console.log(result.context, result.has_context);
+```
+
+## Attach to an Agent
+
+```typescript
+await client.knowledgeBases.attach(7, knowledgeBase.id, {
+  enabled: true,
+  auto_context: true,
+  max_context_chunks: 5,
+  context_threshold: 0.3,
+});
+```
+
+For the equivalent Studio CLI workflow, see the Knowledge Base section in the [CLI overview](/docs/cli/overview).

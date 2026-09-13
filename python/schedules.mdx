@@ -1,0 +1,29 @@
+---
+title: Scheduling
+description: Manage end-user schedules with the Python SDK
+---
+
+Use `client.schedules` for conversation-scoped end-user schedules.
+
+```python
+from chatatp_studio import ChatATPClient
+
+async with ChatATPClient(api_key="chatatp_sk_...") as client:
+    schedule = await client.schedules.create(
+        agent_id=7,
+        conversation_id=91,
+        title="Send renewal reminder",
+        prompt_text="Remind the user about their renewal date.",
+        schedule_type="one_time",
+        schedule_config={"run_at": "2026-10-01T09:00:00Z"},
+    )
+
+    current = await client.schedules.retrieve(schedule["id"])
+    await client.schedules.pause(schedule["id"])
+    await client.schedules.resume(schedule["id"])
+    await client.schedules.run_now(schedule["id"])
+    runs = await client.schedules.runs(schedule["id"])
+    await client.schedules.delete(schedule["id"])
+```
+
+Schedule responses include `status`, `enabled`, and `next_run_at`.

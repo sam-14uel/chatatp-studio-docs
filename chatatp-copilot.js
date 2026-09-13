@@ -47,6 +47,7 @@
   const state = {
     open: false,
     busy: false,
+    typing: false,
     client: null,
     conversationId: Number(localStorage.getItem(CONV_KEY) || 0) || null,
     userId: localStorage.getItem(USER_KEY) || createUserId(),
@@ -116,7 +117,7 @@
         <header class="catp-head">
           <div class="catp-head-title">
             <strong>${escapeHtml(CONFIG.title)}</strong>
-            <span>${escapeHtml(CONFIG.subtitle)}</span>
+            <span id="catp-status">${escapeHtml(CONFIG.subtitle)}</span>
           </div>
           <button type="button" class="catp-icon-btn" id="catp-new" title="New chat">${plusIcon}</button>
           <button type="button" class="catp-icon-btn" id="catp-close" title="Close">${closeIcon}</button>
@@ -144,6 +145,7 @@
     els.input = document.getElementById("catp-input");
     els.form = document.getElementById("catp-form");
     els.send = document.getElementById("catp-send");
+    els.status = document.getElementById("catp-status");
 
     document.getElementById("catp-close").addEventListener("click", close);
     document.getElementById("catp-new").addEventListener("click", resetChat);
@@ -195,12 +197,17 @@
     parent.appendChild(button);
   }
 
+  function setTyping(on, label) {
+    state.typing = on;
+    if (!els.status) return;
+    els.status.textContent = on ? label || "Typing…" : CONFIG.subtitle;
+    els.status.classList.toggle("typing", on);
+  }
+
   function open(prefill) {
     state.open = true;
     els.sidebar.classList.add("open");
     els.float.classList.add("catp-hidden");
-    document.documentElement.classList.add("catp-open");
-    document.body.classList.add("catp-open");
     if (prefill) els.input.value = prefill;
     els.send.disabled = state.busy || !els.input.value.trim();
     setTimeout(() => els.input.focus(), 50);
@@ -210,8 +217,6 @@
     state.open = false;
     els.sidebar.classList.remove("open");
     els.float.classList.remove("catp-hidden");
-    document.documentElement.classList.remove("catp-open");
-    document.body.classList.remove("catp-open");
   }
 
   function resetChat() {
@@ -260,11 +265,17 @@
           message.role === "agent"
             ? `<div class="catp-avatar">${sparkle}</div>`
             : "";
+        const typing =
+          message.role === "agent" && !message.content && state.typing;
+        const body = typing
+          ? `<div class="catp-typing"><span class="catp-dots"><i></i><i></i><i></i></span><span class="catp-typing-label">Typing…</span></div>`
+          : message.role === "agent"
+            ? renderMarkdown(message.content)
+            : escapeHtml(message.content);
         return `
           <div class="catp-row ${message.role}">
             ${avatar}
-            <div class="catp-bubble">${message.role === "agent" ? renderMarkdown(message.content) : escapeHtml(message.content)
-          }</div>
+            <div class="catp-bubble">${body}</div>
           </div>
         `;
       })
@@ -308,6 +319,7 @@
     els.send.disabled = true;
     els.input.value = "";
     els.input.style.height = "auto";
+    setTyping(true, "Typing…");
 
     state.messages.push({ role: "user", content: text });
     state.messages.push({ role: "agent", content: "" });
@@ -333,12 +345,14 @@
         }
         if (event.type === "tool.execution.started") {
           const name = event.data?.name || event.data?.tool || "tool";
+          setTyping(true, `Using ${name}…`);
           state.messages.push({ role: "tool", content: `Using ${name}…` });
           renderMessages();
         }
         if (event.type === "agent.response.delta") {
           const last = state.messages[state.messages.length - 1];
           if (last?.role === "agent") last.content += extractDelta(event.data);
+          if (last?.content) setTyping(true, "Typing…");
           renderMessages();
         }
         if (event.type === "agent.response.completed") {
@@ -348,6 +362,7 @@
             event.data?.agent_message?.content ||
             last.content;
           if (last?.role === "agent") last.content = finalText;
+          setTyping(false);
           renderMessages();
         }
         if (event.type === "error") {
@@ -368,7 +383,9 @@
       }
     } finally {
       state.busy = false;
+      setTyping(false);
       els.send.disabled = !els.input.value.trim();
+      renderMessages();
     }
   }
 

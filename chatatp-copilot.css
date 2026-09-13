@@ -142,7 +142,7 @@ html.dark,
   position: fixed;
   top: 0;
   right: 0;
-  z-index: 50;
+  z-index: 80;
   width: min(var(--catp-sidebar-width), 100vw);
   height: 100vh;
   display: flex;
@@ -150,12 +150,19 @@ html.dark,
   background: var(--catp-surface);
   color: var(--catp-ink);
   border-left: 1px solid var(--catp-line);
+  box-shadow: -16px 0 40px rgb(0 0 0 / 18%);
   transform: translateX(100%);
   transition: transform 220ms ease;
+  pointer-events: none;
 }
 
 .catp-sidebar.open {
   transform: translateX(0);
+  pointer-events: auto;
+}
+
+.catp-status.typing {
+  color: var(--catp-accent);
 }
 
 .catp-head {
@@ -344,6 +351,56 @@ html.dark,
   margin: 0 0 8px 36px;
 }
 
+.catp-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+}
+
+.catp-typing-label {
+  font-size: 13px;
+  color: var(--catp-muted);
+}
+
+.catp-dots {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.catp-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--catp-accent);
+  display: block;
+  animation: catp-bounce 1s infinite ease-in-out;
+}
+
+.catp-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.catp-dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes catp-bounce {
+
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
 .catp-composer {
   flex: none;
   padding: 12px;
@@ -420,44 +477,10 @@ html.dark,
   color: var(--catp-accent);
 }
 
-html.catp-open,
-body.catp-open {
-  overflow: auto;
-}
-
-body.catp-open {
-  padding-right: var(--catp-sidebar-width) !important;
-  box-sizing: border-box;
-}
-
-body.catp-open #navbar,
-body.catp-open header,
-body.catp-open [data-topbar],
-body.catp-open #footer,
-body.catp-open footer {
-  padding-right: var(--catp-sidebar-width);
-}
-
-body.catp-open .catp-float {
-  transform: translateX(calc(-50% - (var(--catp-sidebar-width) / 2)));
-}
-
 @media (max-width: 720px) {
-  .catp-float {
+  .catp-float-wrap {
     bottom: 12px;
     width: calc(100vw - 16px);
-  }
-
-  body.catp-open {
-    padding-right: 0 !important;
-  }
-
-  body.catp-open #navbar,
-  body.catp-open header,
-  body.catp-open [data-topbar],
-  body.catp-open #footer,
-  body.catp-open footer {
-    padding-right: 0;
   }
 
   .catp-ask-btn .catp-kbd,

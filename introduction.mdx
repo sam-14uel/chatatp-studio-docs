@@ -1,40 +1,117 @@
 ---
 title: Introduction
-description: Official SDKs for the ChatATP Studio Developer API
+description: What ChatATP Studio is, why it exists, and how to start building agents
 ---
 
-# ChatATP Studio SDKs
+# ChatATP Studio
 
-The ChatATP Studio SDKs let you integrate your application with ChatATP Agents from JavaScript/TypeScript or Python. They provide a clean, developer-friendly interface over the [Developer API](https://chatatp-agent-builder-backend.onrender.com).
+ChatATP Studio is an **Agent OS**. You design an agent once — its knowledge, memory, tools, schedules, and channels — then run that same agent in WhatsApp, your product, your docs, or any app that can call an API.
 
-## What you can do
+This documentation is for builders who want agents that remember users, take actions, and stay under their control. The SDKs and HTTP API come after the model. If you only need a code snippet, skip to the [Quickstart](/quickstart).
 
-- **Send messages** to any Agent you've built in ChatATP Studio.
-- **Stream responses** in real time.
-- **Manage conversations** — create, retrieve, list, and delete.
-- **Inspect usage** for your API key.
+## Why Studio exists
 
-## How to think about it
+Most teams still assemble agents from pieces that were never meant to work together:
 
-The SDKs model the world in four concepts:
+- A chatbot plugin that can talk, but cannot remember
+- A helpdesk bot that can deflect tickets, but cannot call your APIs
+- An LLM wrapper in application code that works in one product surface and dies when you need WhatsApp
+- Automation tools that fire messages on a schedule, with no conversation and no user memory
+
+Studio puts those layers in one control plane. You configure the agent in the dashboard. You attach knowledge, memory, tools, and schedules. Then you deploy the same agent to a channel or embed it with the SDK.
+
+## How Studio is different
+
+| | Traditional chatbot / widget | Custom LLM in your app | ChatATP Studio |
+|---|---|---|---|
+| Where it lives | One website or one inbox | One codebase | Dashboard + every channel you connect |
+| Memory | Session cookies, if that | You invent it | Agent memory and per-user memory |
+| Knowledge | FAQs pasted into a prompt | Homegrown RAG | Knowledge bases, documents, URLs, search |
+| Actions | Canned replies | You wire every tool | HTTP APIs, MCP, tools the agent can call |
+| Follow-up | Manual | Cron jobs you own | Automations and conversation schedules |
+| Shipping it | Embed a vendor widget | Rewrite for each surface | Studio UI, CLI, Python SDK, JS SDK, raw HTTPS |
+
+The difference is ownership of the **agent**, not ownership of a chat box. Change the model, the tools, or the prompt in Studio and every surface updates.
+
+## The mental model
+
+Everything in Studio maps to a small set of objects.
 
 | Concept | What it is |
 |---|---|
-| **Agent** | An AI assistant you configured in ChatATP Studio |
-| **User** | The end user in your application, identified by `external_user_id` |
-| **Conversation** | A persistent thread between a user and an agent |
-| **Message** | A single exchange within a conversation |
+| **Agent** | The assistant you configure: personality, model, tools, knowledge, memory |
+| **User** | An end user in *your* product, identified by `external_user_id` |
+| **Conversation** | A persistent thread between one user and one agent |
+| **Message** | A single turn in that thread, including tool activity |
+| **Knowledge base** | Documents and URLs the agent can search |
+| **Memory** | Facts the agent keeps at agent level or per user |
+| **Automation** | A builder-owned trigger that runs the agent on a schedule |
+| **Schedule** | A conversation-level task the agent runs for a user |
+| **Developer API key** | How your app talks to that agent over HTTPS |
 
-## Base URL
+If you remember only one thing: **the agent is the product**. Conversations, SDKs, and widgets are how people reach it.
 
-```
-https://chatatp-agent-builder-backend.onrender.com
-```
+## What you can build
 
-## Authentication
+- A support agent that answers from your docs and remembers the customer
+- A sales or ops agent on WhatsApp that can look up orders or create tasks
+- An in-product copilot (the same pattern this documentation site uses)
+- Scheduled check-ins: follow up, remind, or run a workflow without a human in the loop
 
-All API requests require a Developer API key issued from the ChatATP Studio dashboard.
+## Get set up
 
-```
-Authorization: Bearer chatatp_sk_...
-```
+Do this in the [Studio dashboard](https://studio.chat-atp.com/dashboard) before you write code.
+
+<Steps>
+  <Step title="Create an account and a team">
+    Sign in at [studio.chat-atp.com](https://studio.chat-atp.com). Create or join a team so agents, keys, and members live in one workspace.
+  </Step>
+  <Step title="Create an agent">
+    Give it a name, a job, and a model. Keep the first version narrow — one job, one audience.
+  </Step>
+  <Step title="Add knowledge">
+    Upload the docs, policies, or URLs the agent should cite. Attach that knowledge base to the agent.
+  </Step>
+  <Step title="Turn on memory if the agent should remember people">
+    Use agent memory for shared facts. Use user memory for preferences and history tied to `external_user_id`.
+  </Step>
+  <Step title="Connect tools only when talk is not enough">
+    HTTP APIs and MCP servers let the agent do work, not just answer. Start with one tool you can test.
+  </Step>
+  <Step title="Issue a Developer API key">
+    Dashboard → API keys. You will send it as `Authorization: Bearer chatatp_sk_...`.
+  </Step>
+  <Step title="Talk to the agent">
+    Preview in Studio, use the [CLI](/cli/overview), or send a first message from the [Quickstart](/quickstart).
+  </Step>
+</Steps>
+
+## How teams usually adopt it
+
+1. **Build in Studio** until the agent is useful in the preview chat.
+2. **Put it on one channel** — WhatsApp, web, or your own UI.
+3. **Integrate** with the Python SDK, JavaScript SDK, or raw HTTPS when you need the agent inside an existing product.
+4. **Operate** with automations, schedules, usage, and the CLI so the agent keeps working after launch.
+
+You do not have to use the SDK on day one. Many teams never leave the dashboard and CLI until they embed.
+
+## Choose an integration path
+
+| You want to | Start here |
+|---|---|
+| Understand the product | This page |
+| Send a first programmatic message | [Quickstart](/quickstart) |
+| Work from the terminal | [Studio CLI](/cli/overview) |
+| Embed in a JavaScript app | [JavaScript SDK](/js/installation) |
+| Embed in a Python app | [Python SDK](/python/installation) |
+| Call HTTPS directly | [API Reference](/api-reference/overview) |
+| Open the builder | [Dashboard](https://studio.chat-atp.com/dashboard) |
+
+## Production notes
+
+- Base URL: `https://chatatp-agent-builder-backend.onrender.com`
+- Auth: `Authorization: Bearer chatatp_sk_...`
+- Keep keys on a server when you can. Docs widgets and public embeds should use a restricted key.
+- Self-hosted or staging hosts go in `baseUrl` / `base_url` on the client.
+
+The Copilot on these docs is a Studio support agent on the same stack. Ask it how a feature works, then confirm against the page.

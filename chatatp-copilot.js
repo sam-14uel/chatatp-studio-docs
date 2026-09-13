@@ -8,7 +8,7 @@
   window.__chatatpCopilotLoaded = true;
 
   const CONFIG = {
-    apiKey: "REPLACE_WITH_DOCS_AGENT_KEY",
+    apiKey: "chatatp_sk_sLBAqMaUP0L-8DyoHAobVqPGpSk5UMubjawgcJDkSA0",
     agentId: 1,
     baseUrl: "https://chatatp-agent-builder-backend.onrender.com",
     sdkVersion: "0.2.1",

@@ -2,7 +2,7 @@
 //   if (window.__chatatpWidgetLoaded) return;
 //   window.__chatatpWidgetLoaded = true;
 
-//   const SCRIPT_SRC = "https://esm.sh/@chatatp/studio@0.2.0.1/web";
+//   const SCRIPT_SRC = "https://esm.sh/@chatatp/studio@0.2.1/web";
 //   const API_KEY = "chatatp_sk_Hhu1nwRn5Gr5W9s9bDwSiCswrHaGgSPHaszKiBRkM_I"; // publishable widget / client key
 //   const AGENT_ID = "1"; // your agent id
 //   const BASE_URL = "https://chatatp-agent-builder-backend.onrender.com";

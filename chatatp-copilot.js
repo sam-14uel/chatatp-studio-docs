@@ -36,7 +36,6 @@
   };
 
   const USER_KEY = "catp.docs.user";
-  const THREADS_KEY = "catp.docs.threads";
   const ACTIVE_KEY = "catp.docs.active";
 
   const ICONS = {
@@ -58,16 +57,12 @@
     typing: false,
     client: null,
     visitorId: localStorage.getItem(USER_KEY) || createId("docs"),
-    threadId: localStorage.getItem(ACTIVE_KEY) || createId("t"),
-    conversationId: null,
+    conversationId: Number(localStorage.getItem(ACTIVE_KEY) || 0) || null,
     messages: [],
-    threads: loadThreads(),
+    threads: [],
+    loadingHistory: false,
   };
   localStorage.setItem(USER_KEY, state.visitorId);
-
-  const active = state.threads.find((t) => t.id === state.threadId);
-  if (active) state.conversationId = active.conversationId || null;
-  else persistActive();
 
   const els = {};
 
@@ -76,51 +71,56 @@
     return `${prefix}_${String(raw).replace(/-/g, "").slice(0, 16)}`;
   }
 
-  function threadUserId(threadId) {
-    return `${state.visitorId}::${threadId}`;
-  }
-
-  function loadThreads() {
-    try {
-      const raw = JSON.parse(localStorage.getItem(THREADS_KEY) || "[]");
-      return Array.isArray(raw) ? raw : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function saveThreads() {
-    localStorage.setItem(THREADS_KEY, JSON.stringify(state.threads.slice(0, 40)));
-    localStorage.setItem(ACTIVE_KEY, state.threadId);
-  }
-
   function persistActive() {
-    const preview = firstUserText() || "New chat";
-    const existing = state.threads.find((t) => t.id === state.threadId);
-    const entry = {
-      id: state.threadId,
-      conversationId: state.conversationId,
-      title: preview.slice(0, 48),
-      preview: lastVisibleText(),
-      updatedAt: Date.now(),
-    };
-    if (existing) Object.assign(existing, entry);
-    else state.threads.unshift(entry);
-    state.threads.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-    saveThreads();
+    if (state.conversationId) localStorage.setItem(ACTIVE_KEY, String(state.conversationId));
+    else localStorage.removeItem(ACTIVE_KEY);
   }
 
-  function firstUserText() {
+  function pageToArray(page) {
+    if (!page) return [];
+    if (Array.isArray(page)) return page;
+    if (typeof page.toArray === "function") return page.toArray();
+    return page.data || page.results || page.items || [];
+  }
+
+  function mapConversation(row) {
+    const id = Number(row.id || row.conversation_id);
+    return {
+      id,
+      conversationId: id,
+      title: row.title || row.user_display_name || firstUserText(row) || `Conversation #${id}`,
+      preview: row.last_message || row.preview || row.user_display_name || "Open conversation",
+      updatedAt: Date.parse(row.last_message_at || row.updated_at || row.created_at || "") || Date.now(),
+    };
+  }
+
+  function firstUserText(row) {
+    if (row && row.last_user_message) return String(row.last_user_message).slice(0, 48);
     const msg = state.messages.find((m) => m.role === "user");
     return msg ? String(msg.content || "").trim() : "";
   }
 
-  function lastVisibleText() {
-    for (let i = state.messages.length - 1; i >= 0; i -= 1) {
-      const text = String(state.messages[i].content || "").trim();
-      if (text) return text.slice(0, 80);
+  async function loadSessions() {
+    state.loadingHistory = true;
+    render();
+    try {
+      const client = await ensureClient();
+      const page = await client.conversations.list({
+        agent_id: CONFIG.agentId,
+        external_user_id: state.visitorId,
+      });
+      const rows = await pageToArray(page);
+      state.threads = (rows || [])
+        .map(mapConversation)
+        .filter((item) => item.id)
+        .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    } catch (error) {
+      console.warn("Could not load conversations", error);
+      state.threads = [];
+    } finally {
+      state.loadingHistory = false;
+      render();
     }
-    return "";
   }
 
   function pageContext() {
@@ -201,8 +201,8 @@
         <div class="catp-float">
           <span class="catp-float-icon">${ICONS.sparkle}</span>
           <input class="catp-float-input" id="catp-float-input" placeholder="${escapeHtml(
-      CONFIG.placeholder
-    )}" autocomplete="off" />
+            CONFIG.placeholder
+          )}" autocomplete="off" />
           <button type="button" class="catp-float-send" id="catp-float-send">Ask Copilot</button>
         </div>
         <div class="catp-float-powered">Powered by <a href="https://studio.chat-atp.com" target="_blank" rel="noreferrer">ChatATP Studio</a></div>
@@ -221,8 +221,8 @@
         <form class="catp-composer" id="catp-form">
           <div class="catp-composer-box">
             <textarea id="catp-input" rows="1" placeholder="${escapeHtml(
-      CONFIG.placeholder
-    )}"></textarea>
+              CONFIG.placeholder
+            )}"></textarea>
             <button type="submit" class="catp-send" id="catp-send" disabled>${ICONS.send}</button>
           </div>
           <div class="catp-disclaimer">Answers can be wrong. Check the docs when it matters.</div>
@@ -313,8 +313,14 @@
   }
 
   function toggleHistory() {
-    state.view = state.view === "history" ? "chat" : "history";
+    if (state.view === "history") {
+      state.view = "chat";
+      render();
+      return;
+    }
+    state.view = "history";
     render();
+    loadSessions();
   }
 
   function showChat() {
@@ -323,15 +329,27 @@
     els.input.focus();
   }
 
-  function resetChat() {
-    persistActive();
-    state.threadId = createId("t");
+  async function resetChat() {
     state.conversationId = null;
     state.messages = [];
     state.view = "chat";
     persistActive();
     render();
     els.input.focus();
+    try {
+      const client = await ensureClient();
+      const created = await client.conversations.create({
+        agent_id: CONFIG.agentId,
+        external_user_id: state.visitorId,
+        user_display_name: "Docs visitor",
+      });
+      if (created?.id) {
+        state.conversationId = Number(created.id);
+        persistActive();
+      }
+    } catch (error) {
+      console.warn("Could not create conversation", error);
+    }
   }
 
   function setTyping(on) {
@@ -383,6 +401,16 @@
   }
 
   function renderHistory() {
+    if (state.loadingHistory) {
+      els.messages.innerHTML = `
+        <div class="catp-empty">
+          <div class="catp-empty-mark">${ICONS.spin}</div>
+          <h3>Loading chats</h3>
+          <p>Fetching conversations from Studio.</p>
+        </div>
+      `;
+      return;
+    }
     if (!state.threads.length) {
       els.messages.innerHTML = `
         <div class="catp-empty">
@@ -397,19 +425,19 @@
       <div class="catp-history">
         <div class="catp-history-label">Recent chats</div>
         ${state.threads
-        .map((thread) => {
-          const when = thread.updatedAt
-            ? new Date(thread.updatedAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
-            : "";
-          return `
-              <button type="button" class="catp-thread ${thread.id === state.threadId ? "active" : ""}" data-thread="${thread.id}">
-                <strong>${escapeHtml(thread.title || "New chat")}</strong>
-                <small>${escapeHtml(thread.preview || "No messages yet")}</small>
+          .map((thread) => {
+            const when = thread.updatedAt
+              ? new Date(thread.updatedAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+              : "";
+            return `
+              <button type="button" class="catp-thread ${thread.id === state.conversationId ? "active" : ""}" data-thread="${thread.id}">
+                <strong>${escapeHtml(thread.title || "Conversation")}</strong>
+                <small>${escapeHtml(thread.preview || "Open conversation")}</small>
                 <em>${escapeHtml(when)}</em>
               </button>
             `;
-        })
-        .join("")}
+          })
+          .join("")}
       </div>
     `;
   }
@@ -423,14 +451,14 @@
           <p>${escapeHtml(CONFIG.emptySubheading)}</p>
           <div class="catp-starters">
             ${CONFIG.starters
-          .map(
-            (item, index) => `
+              .map(
+                (item, index) => `
               <button type="button" class="catp-starter" data-starter="${index}">
                 ${escapeHtml(item.title)}
                 <small>${escapeHtml(item.subtitle)}</small>
               </button>`
-          )
-          .join("")}
+              )
+              .join("")}
           </div>
         </div>
       `;
@@ -491,25 +519,22 @@
   }
 
   async function openThread(threadId) {
-    const thread = state.threads.find((item) => item.id === threadId);
-    if (!thread) return;
-    state.threadId = thread.id;
-    state.conversationId = thread.conversationId || null;
+    const id = Number(threadId);
+    if (!id) return;
+    state.conversationId = id;
     state.view = "chat";
-    saveThreads();
+    persistActive();
     state.messages = [];
     render();
-    if (!thread.conversationId) return;
     try {
       const client = await ensureClient();
-      const page = await client.messages.list(thread.conversationId);
-      const rows = page.toArray ? await page.toArray() : page.data || page || [];
+      const page = await client.messages.list(id);
+      const rows = await pageToArray(page);
       state.messages = (rows || []).map((row) => ({
-        role: row.sender === "user" ? "user" : "agent",
+        role: row.sender === "user" || row.role === "user" ? "user" : "agent",
         content: row.content || "",
         tools: Array.isArray(row.tool_calls) ? row.tool_calls.map((tool) => normalizeTool(tool, "success")) : [],
       }));
-      persistActive();
       render();
     } catch (error) {
       console.warn("Could not load conversation", error);
@@ -574,12 +599,12 @@
       const stream = state.conversationId
         ? client.messages.stream(state.conversationId, { content: prompt })
         : client.chatStream({
-          agent_id: CONFIG.agentId,
-          external_user_id: threadUserId(state.threadId),
-          user_display_name: "Docs visitor",
-          message: prompt,
-          metadata: { source: "mintlify-docs", thread_id: state.threadId, ...context },
-        });
+            agent_id: CONFIG.agentId,
+            external_user_id: state.visitorId,
+            user_display_name: "Docs visitor",
+            message: prompt,
+            metadata: { source: "mintlify-docs", ...context },
+          });
 
       for await (const event of stream) {
         captureConversation(event);
@@ -607,6 +632,7 @@
           setTyping(false);
           persistActive();
           render();
+          loadSessions();
         }
         if (event.type === "error") {
           throw new Error(extractDelta(event.data) || event.data?.message || "The agent could not answer.");
@@ -625,6 +651,7 @@
       setTyping(false);
       els.send.disabled = !els.input.value.trim();
       persistActive();
+      loadSessions();
       render();
     }
   }
@@ -632,6 +659,9 @@
   function boot() {
     mount();
     injectAskButton();
+    loadSessions().then(() => {
+      if (state.conversationId) openThread(state.conversationId);
+    });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

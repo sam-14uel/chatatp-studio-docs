@@ -1,0 +1,73 @@
+---
+title: "Stream a message"
+description: "Send a message and receive the agent reply as server-sent events"
+api: "POST /v1/conversations/{conversation_id}/messages/stream/"
+---
+
+Same body as [Send a message](/api-reference/messages/send-message). The response is an SSE stream.
+
+Set:
+
+```
+Accept: text/event-stream
+```
+
+Each event block looks like:
+
+```
+event: agent.response.delta
+data: {"text":"Yes, "}
+```
+
+### Event types
+
+| `event` | When it fires |
+|---|---|
+| `conversation.message.created` | User message persisted |
+| `message.created` | A message row was created |
+| `tool.execution.started` | Agent started a tool |
+| `tool.execution.completed` | Tool returned |
+| `agent.response.delta` | Partial assistant text |
+| `agent.response.completed` | Final assistant message |
+| `completion.completed` | Stream finished |
+| `error` | Generation failed |
+
+<ParamField path="conversation_id" type="integer" required>
+  Conversation ID.
+</ParamField>
+<ParamField body="content" type="string" required>
+  Message text.
+</ParamField>
+<ParamField body="metadata" type="object">
+  Optional metadata.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -N -X POST https://chatatp-agent-builder-backend.onrender.com/v1/conversations/91/messages/stream/ \
+  -H "Authorization: Bearer $CHATATP_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Accept: text/event-stream" \
+  -d '{"content":"Give me a summary of your return policy."}'
+```
+</RequestExample>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+for await (const event of client.messages.stream(91, {
+  content: "Give me a summary of your return policy.",
+})) {
+  if (event.type === "agent.response.completed") console.log(event.data);
+}
+```
+
+```python Python
+async for event in await client.messages.stream(
+    91, "Give me a summary of your return policy."
+):
+    if event.type == "agent.response.completed":
+        print(event.data)
+```
+</CodeGroup>

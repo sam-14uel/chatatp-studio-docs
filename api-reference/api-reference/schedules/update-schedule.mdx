@@ -1,0 +1,23 @@
+---
+title: "Update a schedule"
+description: "Patch a schedule"
+api: "PATCH /v1/schedules/{schedule_id}/"
+---
+
+<ParamField path="schedule_id" type="integer" required>
+  Schedule ID.
+</ParamField>
+
+Pass only the fields you want to change in the JSON body.
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.schedules.update(id, fields);
+```
+
+```python Python
+await client.schedules.update(schedule_id, **fields)
+```
+</CodeGroup>

@@ -1,0 +1,30 @@
+---
+title: "Search memories"
+description: "Retrieve relevant memories for a user query"
+api: "POST /v1/agents/{agent_id}/memories/search/"
+---
+
+<ParamField path="agent_id" type="integer" required>
+  Agent ID.
+</ParamField>
+<ParamField body="agent_user_id" type="integer" required>
+  Agent user whose memories should be searched.
+</ParamField>
+<ParamField body="query" type="string" required>
+  Search query.
+</ParamField>
+<ParamField body="top_k" type="integer">
+  Number of results. Defaults to `5`.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.memories.search(7, 42, "preferred language", 5);
+```
+
+```python Python
+await client.memories.search(7, 42, "preferred language", top_k=5)
+```
+</CodeGroup>

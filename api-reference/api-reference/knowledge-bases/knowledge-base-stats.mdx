@@ -1,0 +1,21 @@
+---
+title: "Knowledge base stats"
+description: "Indexing and document statistics"
+api: "GET /v1/knowledge-bases/{knowledge_base_id}/stats/"
+---
+
+<ParamField path="knowledge_base_id" type="string" required>
+  Knowledge base ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const stats = await client.knowledgeBases.stats(id);
+```
+
+```python Python
+stats = await client.knowledge_bases.stats(knowledge_base_id)
+```
+</CodeGroup>

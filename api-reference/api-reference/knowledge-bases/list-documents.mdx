@@ -1,0 +1,21 @@
+---
+title: "List documents"
+description: "List documents in a knowledge base"
+api: "GET /v1/knowledge-bases/{knowledge_base_id}/documents/"
+---
+
+<ParamField path="knowledge_base_id" type="string" required>
+  Knowledge base ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const docs = await client.knowledgeBases.documents(id);
+```
+
+```python Python
+docs = await client.knowledge_bases.documents(knowledge_base_id)
+```
+</CodeGroup>

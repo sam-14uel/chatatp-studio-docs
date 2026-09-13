@@ -1,0 +1,27 @@
+---
+title: "Update a knowledge base"
+description: "Patch knowledge base fields"
+api: "PATCH /v1/knowledge-bases/{knowledge_base_id}/"
+---
+
+<ParamField path="knowledge_base_id" type="string" required>
+  Knowledge base ID.
+</ParamField>
+<ParamField body="name" type="string">
+  New display name.
+</ParamField>
+<ParamField body="description" type="string">
+  New description.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.knowledgeBases.update(id, { name: "Updated" });
+```
+
+```python Python
+await client.knowledge_bases.update(knowledge_base_id, name="Updated")
+```
+</CodeGroup>

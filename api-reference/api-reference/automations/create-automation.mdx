@@ -1,0 +1,15 @@
+---
+title: "Create an automation"
+description: "Create a automation"
+api: "POST /v1/automations/"
+---
+
+<ParamField body="agent_id" type="integer" required>
+  Agent that owns the automation.
+</ParamField>
+<ParamField body="name" type="string">
+  Display name.
+</ParamField>
+<ParamField body="cron" type="string">
+  Cron expression or schedule payload accepted by the backend.
+</ParamField>

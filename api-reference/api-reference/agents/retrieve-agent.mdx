@@ -1,0 +1,21 @@
+---
+title: "Retrieve an agent"
+description: "Get a single agent by ID"
+api: "GET /v1/agents/{agent_id}/"
+---
+
+<ParamField path="agent_id" type="integer" required>
+  Agent ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const agent = await client.agents.retrieve(7);
+```
+
+```python Python
+agent = await client.agents.retrieve(7)
+```
+</CodeGroup>

@@ -1,0 +1,24 @@
+---
+title: "List memories"
+description: "List memories stored for an agent"
+api: "GET /v1/agents/{agent_id}/memories/"
+---
+
+<ParamField path="agent_id" type="integer" required>
+  Agent ID.
+</ParamField>
+<ParamField query="agent_user_id" type="integer">
+  Restrict to one agent user.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const memories = await client.memories.list(7, { agent_user_id: 42 });
+```
+
+```python Python
+memories = await client.memories.list(7, agent_user_id=42)
+```
+</CodeGroup>

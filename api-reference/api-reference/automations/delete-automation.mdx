@@ -1,0 +1,21 @@
+---
+title: "Delete an automation"
+description: "Permanently delete a automation"
+api: "DELETE /v1/automations/{automation_id}/"
+---
+
+<ParamField path="automation_id" type="integer" required>
+  Automation ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.automations.delete(id);
+```
+
+```python Python
+await client.automations.delete(automation_id)
+```
+</CodeGroup>

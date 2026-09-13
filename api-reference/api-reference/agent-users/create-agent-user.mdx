@@ -1,0 +1,27 @@
+---
+title: "Create an agent user"
+description: "Create or upsert an end user on an agent"
+api: "POST /v1/agents/{agent_id}/users/"
+---
+
+<ParamField path="agent_id" type="integer" required>
+  Agent ID.
+</ParamField>
+<ParamField body="external_user_id" type="string">
+  Your unique identifier for the user.
+</ParamField>
+<ParamField body="display_name" type="string">
+  Optional display name.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.agentUsers.create(7, { external_user_id: "user_12345" });
+```
+
+```python Python
+await client.agent_users.create(7, external_user_id="user_12345")
+```
+</CodeGroup>

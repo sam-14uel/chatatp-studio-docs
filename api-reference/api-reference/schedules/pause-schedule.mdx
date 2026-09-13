@@ -1,0 +1,21 @@
+---
+title: "Pause a schedule"
+description: "Pause a schedule"
+api: "POST /v1/schedules/{schedule_id}/pause/"
+---
+
+<ParamField path="schedule_id" type="integer" required>
+  Schedule ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.schedules.pause(id);
+```
+
+```python Python
+await client.schedules.pause(schedule_id)
+```
+</CodeGroup>

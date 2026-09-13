@@ -1,0 +1,18 @@
+---
+title: "Create a schedule"
+description: "Create a schedule"
+api: "POST /v1/schedules/"
+---
+
+<ParamField body="agent_id" type="integer" required>
+  Agent that owns the schedule.
+</ParamField>
+<ParamField body="conversation_id" type="integer" required>
+  Conversation the schedule runs against.
+</ParamField>
+<ParamField body="name" type="string">
+  Display name.
+</ParamField>
+<ParamField body="cron" type="string">
+  Cron expression or schedule payload accepted by the backend.
+</ParamField>

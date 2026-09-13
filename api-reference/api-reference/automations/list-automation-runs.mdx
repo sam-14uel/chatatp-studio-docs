@@ -1,0 +1,21 @@
+---
+title: "List automation runs"
+description: "List execution runs for a automation"
+api: "GET /v1/automations/{automation_id}/runs/"
+---
+
+<ParamField path="automation_id" type="integer" required>
+  Automation ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const runs = await client.automations.runs(id);
+```
+
+```python Python
+runs = await client.automations.runs(automation_id)
+```
+</CodeGroup>

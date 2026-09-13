@@ -1,0 +1,56 @@
+---
+title: "Create a conversation"
+description: "Create or upsert a conversation for an agent + user pair"
+api: "POST /v1/conversations/"
+---
+
+If a conversation already exists for the `agent_id` + `external_user_id` pair, the API returns the existing conversation instead of creating a duplicate.
+
+<ParamField body="agent_id" type="integer" required>
+  Agent to talk to.
+</ParamField>
+<ParamField body="external_user_id" type="string" required>
+  Your unique identifier for the end user.
+</ParamField>
+<ParamField body="user_display_name" type="string">
+  Optional display name shown in Studio.
+</ParamField>
+<ParamField body="metadata" type="object">
+  Optional key-value metadata attached to the conversation.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://chatatp-agent-builder-backend.onrender.com/v1/conversations/ \
+  -H "Authorization: Bearer $CHATATP_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent_id": 7,
+    "external_user_id": "user_12345",
+    "user_display_name": "Jane Customer",
+    "metadata": { "plan": "pro" }
+  }'
+```
+</RequestExample>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const conversation = await client.conversations.create({
+  agent_id: 7,
+  external_user_id: "user_12345",
+  user_display_name: "Jane Customer",
+  metadata: { plan: "pro" },
+});
+```
+
+```python Python
+conversation = await client.conversations.create(
+    7,
+    "user_12345",
+    user_display_name="Jane Customer",
+    metadata={"plan": "pro"},
+)
+```
+</CodeGroup>

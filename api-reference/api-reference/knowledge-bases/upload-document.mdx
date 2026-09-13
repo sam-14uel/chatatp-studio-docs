@@ -1,0 +1,34 @@
+---
+title: "Upload a document"
+description: "Upload a file into a knowledge base"
+api: "POST /v1/knowledge-bases/{knowledge_base_id}/documents/"
+---
+
+Multipart upload. Field name is `file`. Do **not** send `Content-Type: application/json`.
+
+<ParamField path="knowledge_base_id" type="string" required>
+  Knowledge base ID.
+</ParamField>
+<ParamField body="file" type="file" required>
+  File bytes (`multipart/form-data`).
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://chatatp-agent-builder-backend.onrender.com/v1/knowledge-bases/kb_123/documents/ \
+  -H "Authorization: Bearer $CHATATP_API_KEY" \
+  -F "file=@./handbook.pdf"
+```
+</RequestExample>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.knowledgeBases.upload(id, "./handbook.pdf");
+```
+
+```python Python
+await client.knowledge_bases.upload(knowledge_base_id, Path("handbook.pdf"))
+```
+</CodeGroup>

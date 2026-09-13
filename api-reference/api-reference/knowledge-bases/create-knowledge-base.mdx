@@ -1,0 +1,27 @@
+---
+title: "Create a knowledge base"
+description: "Create a knowledge base, optionally bound to an agent"
+api: "POST /v1/knowledge-bases/"
+---
+
+<ParamField body="name" type="string" required>
+  Display name.
+</ParamField>
+<ParamField body="description" type="string">
+  Optional description. Defaults to `""`.
+</ParamField>
+<ParamField body="agent_id" type="integer">
+  Optional agent to attach on create.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const kb = await client.knowledgeBases.create({ name: "Docs", description: "Help center" });
+```
+
+```python Python
+kb = await client.knowledge_bases.create("Docs", description="Help center")
+```
+</CodeGroup>

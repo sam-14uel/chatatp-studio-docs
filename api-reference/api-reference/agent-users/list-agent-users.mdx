@@ -1,0 +1,21 @@
+---
+title: "List agent users"
+description: "List users known to an agent"
+api: "GET /v1/agents/{agent_id}/users/"
+---
+
+<ParamField path="agent_id" type="integer" required>
+  Agent ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const users = await client.agentUsers.list(7);
+```
+
+```python Python
+users = await client.agent_users.list(7)
+```
+</CodeGroup>

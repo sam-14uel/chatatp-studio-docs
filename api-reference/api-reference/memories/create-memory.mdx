@@ -1,0 +1,39 @@
+---
+title: "Create a memory"
+description: "Store a memory on an agent"
+api: "POST /v1/agents/{agent_id}/memories/"
+---
+
+<ParamField path="agent_id" type="integer" required>
+  Agent ID.
+</ParamField>
+<ParamField body="title" type="string" required>
+  Short title.
+</ParamField>
+<ParamField body="content" type="string" required>
+  Memory body.
+</ParamField>
+<ParamField body="agent_user_id" type="integer">
+  Scope the memory to one user. Omit for agent-level memory.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.memories.create(7, {
+  title: "Preferred language",
+  content: "Jane prefers English.",
+  agent_user_id: 42,
+});
+```
+
+```python Python
+await client.memories.create(
+    7,
+    title="Preferred language",
+    content="Jane prefers English.",
+    agent_user_id=42,
+)
+```
+</CodeGroup>

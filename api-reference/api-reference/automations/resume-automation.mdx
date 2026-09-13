@@ -1,0 +1,21 @@
+---
+title: "Resume an automation"
+description: "Resume a automation"
+api: "POST /v1/automations/{automation_id}/resume/"
+---
+
+<ParamField path="automation_id" type="integer" required>
+  Automation ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.automations.resume(id);
+```
+
+```python Python
+await client.automations.resume(automation_id)
+```
+</CodeGroup>

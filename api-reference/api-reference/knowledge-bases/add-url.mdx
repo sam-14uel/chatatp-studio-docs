@@ -1,0 +1,24 @@
+---
+title: "Index a URL"
+description: "Add a domain/URL source to a knowledge base"
+api: "POST /v1/knowledge-bases/{knowledge_base_id}/domains/"
+---
+
+<ParamField path="knowledge_base_id" type="string" required>
+  Knowledge base ID.
+</ParamField>
+<ParamField body="url" type="string" required>
+  URL to crawl and index.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.knowledgeBases.addUrl(id, "https://docs.example.com");
+```
+
+```python Python
+await client.knowledge_bases.add_url(knowledge_base_id, "https://docs.example.com")
+```
+</CodeGroup>

@@ -1,0 +1,30 @@
+---
+title: "Retrieve usage"
+description: "Usage statistics for the current API key"
+api: "GET /v1/usage/"
+---
+
+<ResponseField name="total_requests" type="integer" required>
+  Lifetime request count for this key.
+</ResponseField>
+<ResponseField name="last_request_at" type="string">
+  ISO 8601 timestamp of the most recent request, or `null`.
+</ResponseField>
+<ResponseField name="by_endpoint" type="object[]">
+  Breakdown by path.
+</ResponseField>
+<ResponseField name="by_status" type="object[]">
+  Breakdown by HTTP status.
+</ResponseField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const usage = await client.usage.retrieve();
+```
+
+```python Python
+usage = await client.usage.retrieve()
+```
+</CodeGroup>

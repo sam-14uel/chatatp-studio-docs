@@ -1,0 +1,23 @@
+---
+title: "Delete a conversation"
+description: "Permanently delete a conversation"
+api: "DELETE /v1/conversations/{conversation_id}/"
+---
+
+<ParamField path="conversation_id" type="integer" required>
+  Conversation ID.
+</ParamField>
+
+Returns `204 No Content`.
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.conversations.delete(91);
+```
+
+```python Python
+await client.conversations.delete(91)
+```
+</CodeGroup>

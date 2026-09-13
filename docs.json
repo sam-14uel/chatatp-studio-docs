@@ -12,6 +12,27 @@
     "light": "/logo/light.jpeg",
     "dark": "/logo/dark.jpeg"
   },
+  "api": {
+    "mdx": {
+      "server": "https://chatatp-agent-builder-backend.onrender.com",
+      "auth": {
+        "method": "bearer"
+      }
+    },
+    "playground": {
+      "display": "interactive"
+    },
+    "examples": {
+      "languages": [
+        "curl",
+        "javascript",
+        "python"
+      ],
+      "defaults": "required",
+      "prefill": true,
+      "autogenerate": true
+    }
+  },
   "navigation": {
     "tabs": [
       {
@@ -83,6 +104,119 @@
               "python/streaming",
               "python/pagination",
               "python/errors"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/overview",
+              "api-reference/authentication"
+            ]
+          },
+          {
+            "group": "Agents",
+            "pages": [
+              "api-reference/agents/list-agents",
+              "api-reference/agents/retrieve-agent"
+            ]
+          },
+          {
+            "group": "Conversations",
+            "pages": [
+              "api-reference/conversations/create-conversation",
+              "api-reference/conversations/list-conversations",
+              "api-reference/conversations/retrieve-conversation",
+              "api-reference/conversations/delete-conversation"
+            ]
+          },
+          {
+            "group": "Messages",
+            "pages": [
+              "api-reference/messages/list-messages",
+              "api-reference/messages/send-message",
+              "api-reference/messages/stream-message"
+            ]
+          },
+          {
+            "group": "Usage",
+            "pages": [
+              "api-reference/usage/retrieve-usage"
+            ]
+          },
+          {
+            "group": "Knowledge Bases",
+            "pages": [
+              "api-reference/knowledge-bases/list-knowledge-bases",
+              "api-reference/knowledge-bases/create-knowledge-base",
+              "api-reference/knowledge-bases/retrieve-knowledge-base",
+              "api-reference/knowledge-bases/update-knowledge-base",
+              "api-reference/knowledge-bases/delete-knowledge-base",
+              "api-reference/knowledge-bases/upload-document",
+              "api-reference/knowledge-bases/list-documents",
+              "api-reference/knowledge-bases/add-url",
+              "api-reference/knowledge-bases/knowledge-base-stats",
+              "api-reference/knowledge-bases/search-knowledge-base",
+              "api-reference/knowledge-bases/attach-knowledge-base",
+              "api-reference/knowledge-bases/detach-knowledge-base"
+            ]
+          },
+          {
+            "group": "Agent Users",
+            "pages": [
+              "api-reference/agent-users/list-agent-users",
+              "api-reference/agent-users/create-agent-user"
+            ]
+          },
+          {
+            "group": "Memories",
+            "pages": [
+              "api-reference/memories/list-memories",
+              "api-reference/memories/create-memory",
+              "api-reference/memories/search-memories"
+            ]
+          },
+          {
+            "group": "Automations",
+            "pages": [
+              "api-reference/automations/list-automations",
+              "api-reference/automations/create-automation",
+              "api-reference/automations/retrieve-automation",
+              "api-reference/automations/update-automation",
+              "api-reference/automations/delete-automation",
+              "api-reference/automations/pause-automation",
+              "api-reference/automations/resume-automation",
+              "api-reference/automations/run-now-automation",
+              "api-reference/automations/list-automation-runs"
+            ]
+          },
+          {
+            "group": "Schedules",
+            "pages": [
+              "api-reference/schedules/list-schedules",
+              "api-reference/schedules/create-schedule",
+              "api-reference/schedules/retrieve-schedule",
+              "api-reference/schedules/update-schedule",
+              "api-reference/schedules/delete-schedule",
+              "api-reference/schedules/pause-schedule",
+              "api-reference/schedules/resume-schedule",
+              "api-reference/schedules/run-now-schedule",
+              "api-reference/schedules/list-schedule-runs"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Dashboard API",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "dashboard-api/overview"
             ]
           }
         ]

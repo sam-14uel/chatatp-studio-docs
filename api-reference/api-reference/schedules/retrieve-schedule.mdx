@@ -1,0 +1,21 @@
+---
+title: "Retrieve a schedule"
+description: "Get a schedule by ID"
+api: "GET /v1/schedules/{schedule_id}/"
+---
+
+<ParamField path="schedule_id" type="integer" required>
+  Schedule ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const item = await client.schedules.retrieve(id);
+```
+
+```python Python
+item = await client.schedules.retrieve(schedule_id)
+```
+</CodeGroup>

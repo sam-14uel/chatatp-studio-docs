@@ -1,0 +1,63 @@
+---
+title: "Authentication"
+description: "Authenticate raw HTTPS requests to the Developer API"
+---
+
+All `/v1/` requests require a Developer API key from the ChatATP Studio dashboard.
+
+## Header
+
+```
+Authorization: Bearer chatatp_sk_...
+Content-Type: application/json
+```
+
+<Warning>
+  Never log or commit API keys. The SDKs redact keys even when `debug` is enabled.
+</Warning>
+
+## cURL
+
+```bash
+curl https://chatatp-agent-builder-backend.onrender.com/v1/agents/ \
+  -H "Authorization: Bearer $CHATATP_API_KEY" \
+  -H "Content-Type: application/json"
+```
+
+## JavaScript (fetch)
+
+```javascript
+const res = await fetch("https://chatatp-agent-builder-backend.onrender.com/v1/agents/", {
+  headers: {
+    Authorization: `Bearer ${process.env.CHATATP_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+});
+```
+
+## Python (httpx)
+
+```python
+import os, httpx
+
+headers = {
+    "Authorization": f"Bearer {os.environ['CHATATP_API_KEY']}",
+    "Content-Type": "application/json",
+}
+async with httpx.AsyncClient(base_url="https://chatatp-agent-builder-backend.onrender.com") as client:
+    r = await client.get("/v1/agents/", headers=headers)
+    r.raise_for_status()
+```
+
+## Errors
+
+| Status | SDK exception | Meaning |
+|---|---|---|
+| `400` | `ValidationError` | Invalid body or query |
+| `401` | `AuthenticationError` | Missing or invalid key |
+| `403` | `PermissionError` | Key cannot access the resource |
+| `404` | `NotFoundError` | Resource does not exist |
+| `429` | `RateLimitError` | Too many requests |
+| `5xx` | `ServerError` | Upstream failure |
+
+Error bodies include a human-readable `message`. Successful responses may include `x-request-id`, which the SDKs expose as `requestId` / `request_id`.

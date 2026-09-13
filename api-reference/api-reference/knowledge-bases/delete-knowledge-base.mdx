@@ -1,0 +1,21 @@
+---
+title: "Delete a knowledge base"
+description: "Permanently delete a knowledge base"
+api: "DELETE /v1/knowledge-bases/{knowledge_base_id}/"
+---
+
+<ParamField path="knowledge_base_id" type="string" required>
+  Knowledge base ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.knowledgeBases.delete(id);
+```
+
+```python Python
+await client.knowledge_bases.delete(knowledge_base_id)
+```
+</CodeGroup>

@@ -1,0 +1,51 @@
+---
+title: "Developer API"
+description: "Raw HTTPS endpoints used by the ChatATP Studio Python and JavaScript SDKs"
+---
+
+The Developer API is the HTTPS surface the official SDKs call. Every `client.agents.*`, `client.conversations.*`, `client.messages.*`, and related method maps to one of the endpoints in this section.
+
+<Info>
+  Prefer the SDKs when you can. Use these raw requests when you are writing a new language binding, debugging with cURL, or calling the API from a tool that cannot import `@chatatp/studio` or `chatatp-studio`.
+</Info>
+
+## Base URL
+
+```
+https://chatatp-agent-builder-backend.onrender.com
+```
+
+Override it in the SDKs with `baseUrl` / `base_url` for self-hosted environments.
+
+## Two API surfaces
+
+| Surface | Prefix | Auth | Used by |
+|---|---|---|---|
+| **Developer API** | `/v1/` | `Authorization: Bearer chatatp_sk_...` | Python SDK, JS SDK |
+| **Dashboard API** | `/dapi/` | User session / JWT from `studio auth login` | Studio CLI inside both packages |
+
+This tab documents `/v1/`. Dashboard (`/dapi/`) paths live under [Dashboard API](/dashboard-api/overview).
+
+## Conventions
+
+- Paths end with a trailing slash.
+- JSON request and response bodies use `Content-Type: application/json`.
+- List endpoints return `{ "data": [ ... ] }`.
+- Successful deletes return `204 No Content`.
+- File upload uses `multipart/form-data` with a `file` field.
+- Streaming uses `POST` + `Accept: text/event-stream` (SSE).
+- Transient failures (`429`, `5xx`) are retried by the SDKs with exponential backoff.
+
+## Resource map
+
+| SDK resource | HTTP prefix |
+|---|---|
+| `client.agents` | `/v1/agents/` |
+| `client.conversations` | `/v1/conversations/` |
+| `client.messages` | `/v1/conversations/{conversation_id}/messages/` |
+| `client.usage` | `/v1/usage/` |
+| `client.knowledge_bases` / `client.knowledgeBases` | `/v1/knowledge-bases/` |
+| `client.agent_users` / `client.agentUsers` | `/v1/agents/{agent_id}/users/` |
+| `client.memories` | `/v1/agents/{agent_id}/memories/` |
+| `client.automations` | `/v1/automations/` |
+| `client.schedules` | `/v1/schedules/` |

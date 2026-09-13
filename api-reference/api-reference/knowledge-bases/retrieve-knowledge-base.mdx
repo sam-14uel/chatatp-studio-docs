@@ -1,0 +1,21 @@
+---
+title: "Retrieve a knowledge base"
+description: "Get a knowledge base by ID"
+api: "GET /v1/knowledge-bases/{knowledge_base_id}/"
+---
+
+<ParamField path="knowledge_base_id" type="string" required>
+  Knowledge base ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const kb = await client.knowledgeBases.retrieve(id);
+```
+
+```python Python
+kb = await client.knowledge_bases.retrieve(knowledge_base_id)
+```
+</CodeGroup>

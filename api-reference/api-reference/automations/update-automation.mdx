@@ -1,0 +1,23 @@
+---
+title: "Update an automation"
+description: "Patch a automation"
+api: "PATCH /v1/automations/{automation_id}/"
+---
+
+<ParamField path="automation_id" type="integer" required>
+  Automation ID.
+</ParamField>
+
+Pass only the fields you want to change in the JSON body.
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.automations.update(id, fields);
+```
+
+```python Python
+await client.automations.update(automation_id, **fields)
+```
+</CodeGroup>

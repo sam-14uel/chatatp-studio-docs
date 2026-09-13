@@ -1,0 +1,19 @@
+---
+title: "List automations"
+description: "List automations for the current API key"
+api: "GET /v1/automations/"
+---
+
+Returns `automations` owned by the current key.
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const items = await client.automations.list();
+```
+
+```python Python
+items = await client.automations.list()
+```
+</CodeGroup>

@@ -1,0 +1,43 @@
+---
+title: "Retrieve a conversation"
+description: "Get a conversation and its nested agent"
+api: "GET /v1/conversations/{conversation_id}/"
+---
+
+<ParamField path="conversation_id" type="integer" required>
+  Conversation ID.
+</ParamField>
+
+<ResponseField name="id" type="integer" required>
+  Conversation ID.
+</ResponseField>
+<ResponseField name="agent" type="Agent" required>
+  Nested agent object.
+</ResponseField>
+<ResponseField name="external_user_id" type="string" required>
+  Your user identifier.
+</ResponseField>
+<ResponseField name="user_display_name" type="string">
+  Display name, or `null`.
+</ResponseField>
+<ResponseField name="metadata" type="object">
+  Key-value metadata.
+</ResponseField>
+<ResponseField name="message_count" type="integer">
+  Total messages exchanged.
+</ResponseField>
+<ResponseField name="last_message_at" type="string">
+  ISO 8601 timestamp of the last message, or `null`.
+</ResponseField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const conversation = await client.conversations.retrieve(91);
+```
+
+```python Python
+conversation = await client.conversations.retrieve(91)
+```
+</CodeGroup>

@@ -1,0 +1,43 @@
+---
+title: "List messages"
+description: "Retrieve the full message history for a conversation"
+api: "GET /v1/conversations/{conversation_id}/messages/"
+---
+
+<ParamField path="conversation_id" type="integer" required>
+  Conversation ID.
+</ParamField>
+
+<ResponseField name="data" type="Message[]" required>
+  Page of messages.
+</ResponseField>
+<ResponseField name="data[].id" type="integer" required>
+  Message ID.
+</ResponseField>
+<ResponseField name="data[].sender" type='"user" | "agent"' required>
+  Who sent the message.
+</ResponseField>
+<ResponseField name="data[].content" type="string" required>
+  Message text.
+</ResponseField>
+<ResponseField name="data[].tool_calls" type="array">
+  Tool calls made by the agent.
+</ResponseField>
+<ResponseField name="data[].metadata" type="object">
+  Key-value metadata.
+</ResponseField>
+<ResponseField name="data[].timestamp" type="string">
+  ISO 8601 timestamp.
+</ResponseField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const page = await client.messages.list(91);
+```
+
+```python Python
+page = await client.messages.list(91)
+```
+</CodeGroup>

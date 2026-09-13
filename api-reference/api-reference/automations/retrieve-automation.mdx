@@ -1,0 +1,21 @@
+---
+title: "Retrieve an automation"
+description: "Get a automation by ID"
+api: "GET /v1/automations/{automation_id}/"
+---
+
+<ParamField path="automation_id" type="integer" required>
+  Automation ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const item = await client.automations.retrieve(id);
+```
+
+```python Python
+item = await client.automations.retrieve(automation_id)
+```
+</CodeGroup>

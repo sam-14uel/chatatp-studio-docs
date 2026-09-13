@@ -1,0 +1,28 @@
+---
+title: "List conversations"
+description: "List conversations, optionally filtered by agent or user"
+api: "GET /v1/conversations/"
+---
+
+<ParamField query="agent_id" type="integer">
+  Restrict results to one agent.
+</ParamField>
+<ParamField query="external_user_id" type="string">
+  Restrict results to one end user.
+</ParamField>
+
+<ResponseField name="data" type="ConversationSummary[]" required>
+  Page of conversation summaries (`id`, `external_user_id`).
+</ResponseField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const page = await client.conversations.list({ agent_id: 7 });
+```
+
+```python Python
+page = await client.conversations.list(agent_id=7)
+```
+</CodeGroup>

@@ -1,0 +1,58 @@
+---
+title: "Send a message"
+description: "Send a user message and wait for the agent reply"
+api: "POST /v1/conversations/{conversation_id}/messages/"
+---
+
+<ParamField path="conversation_id" type="integer" required>
+  Conversation ID.
+</ParamField>
+<ParamField body="content" type="string" required>
+  Message text.
+</ParamField>
+<ParamField body="metadata" type="object">
+  Optional metadata (for example a client-side message ID).
+</ParamField>
+
+<ResponseField name="conversation" type="ConversationSummary" required>
+  `{ id, external_user_id }` for the conversation.
+</ResponseField>
+<ResponseField name="user_message" type="Message" required>
+  The stored user message.
+</ResponseField>
+<ResponseField name="agent_message" type="Message" required>
+  The completed agent reply.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://chatatp-agent-builder-backend.onrender.com/v1/conversations/91/messages/ \
+  -H "Authorization: Bearer $CHATATP_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "Do you ship to Lagos?",
+    "metadata": { "client_message_id": "msg_abc123" }
+  }'
+```
+</RequestExample>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const result = await client.messages.send(91, {
+  content: "Do you ship to Lagos?",
+  metadata: { client_message_id: "msg_abc123" },
+});
+console.log(result.agent_message.content);
+```
+
+```python Python
+result = await client.messages.send(
+    91,
+    "Do you ship to Lagos?",
+    metadata={"client_message_id": "msg_abc123"},
+)
+print(result.agent_message.content)
+```
+</CodeGroup>

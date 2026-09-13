@@ -1,0 +1,21 @@
+---
+title: "Run now a schedule"
+description: "Run now a schedule"
+api: "POST /v1/schedules/{schedule_id}/run-now/"
+---
+
+<ParamField path="schedule_id" type="integer" required>
+  Schedule ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.schedules.runNow(id);
+```
+
+```python Python
+await client.schedules.run_now(schedule_id)
+```
+</CodeGroup>

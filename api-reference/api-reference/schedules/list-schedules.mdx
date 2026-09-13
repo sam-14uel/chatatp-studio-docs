@@ -1,0 +1,19 @@
+---
+title: "List schedules"
+description: "List schedules for the current API key"
+api: "GET /v1/schedules/"
+---
+
+Returns `schedules` owned by the current key.
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const items = await client.schedules.list();
+```
+
+```python Python
+items = await client.schedules.list()
+```
+</CodeGroup>

@@ -1,0 +1,24 @@
+---
+title: "Detach a knowledge base"
+description: "Detach a knowledge base from an agent"
+api: "DELETE /v1/agents/{agent_id}/knowledge-bases/{knowledge_base_id}/"
+---
+
+<ParamField path="agent_id" type="integer" required>
+  Agent ID.
+</ParamField>
+<ParamField path="knowledge_base_id" type="string" required>
+  Knowledge base ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.knowledgeBases.detach(7, kbId);
+```
+
+```python Python
+await client.knowledge_bases.detach(7, knowledge_base_id)
+```
+</CodeGroup>

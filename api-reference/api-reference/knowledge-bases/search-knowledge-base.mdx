@@ -1,0 +1,27 @@
+---
+title: "Search a knowledge base"
+description: "Retrieve relevant chunks for a query"
+api: "POST /v1/knowledge-bases/{knowledge_base_id}/search/"
+---
+
+<ParamField path="knowledge_base_id" type="string" required>
+  Knowledge base ID.
+</ParamField>
+<ParamField body="query" type="string" required>
+  Search query.
+</ParamField>
+<ParamField body="top_k" type="integer">
+  Number of chunks to return. Defaults to `5`.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const result = await client.knowledgeBases.search(id, "How do I reset my password?", 5);
+```
+
+```python Python
+result = await client.knowledge_bases.search(knowledge_base_id, "How do I reset my password?", top_k=5)
+```
+</CodeGroup>

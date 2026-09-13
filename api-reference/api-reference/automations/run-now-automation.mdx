@@ -1,0 +1,21 @@
+---
+title: "Run now an automation"
+description: "Run now a automation"
+api: "POST /v1/automations/{automation_id}/run-now/"
+---
+
+<ParamField path="automation_id" type="integer" required>
+  Automation ID.
+</ParamField>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.automations.runNow(id);
+```
+
+```python Python
+await client.automations.run_now(automation_id)
+```
+</CodeGroup>

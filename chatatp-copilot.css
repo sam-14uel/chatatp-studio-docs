@@ -59,11 +59,10 @@
   padding: 8px 8px 8px 16px;
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: color-mix(in srgb, var(--background) 88%, transparent);
-  backdrop-filter: blur(16px);
+  background: var(--background);
   box-shadow:
-    0 1px 2px rgb(0 0 0 / 4%),
-    0 12px 40px rgb(15 23 42 / 10%);
+    0 1px 2px rgb(0 0 0 / 6%),
+    0 12px 32px rgb(15 23 42 / 12%);
 }
 
 .catp-float-icon {
@@ -105,21 +104,6 @@
   background: #4f46e5;
 }
 
-.catp-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 49;
-  background: rgb(15 23 42 / 18%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 200ms ease;
-}
-
-.catp-backdrop.open {
-  opacity: 1;
-  pointer-events: auto;
-}
-
 .catp-sidebar {
   position: fixed;
   top: 0;
@@ -131,7 +115,6 @@
   flex-direction: column;
   background: var(--background);
   border-left: 1px solid var(--border);
-  box-shadow: -16px 0 40px rgb(15 23 42 / 8%);
   transform: translateX(100%);
   transition: transform 220ms ease;
 }
@@ -383,8 +366,43 @@
   text-align: center;
 }
 
+.catp-powered {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--gray-500, #64748b);
+}
+
+.catp-powered a {
+  color: inherit;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.catp-powered a:hover {
+  color: var(--catp-accent);
+}
+
+html.catp-open,
 body.catp-open {
-  overflow: hidden;
+  overflow: auto;
+}
+
+body.catp-open {
+  padding-right: var(--catp-sidebar-width) !important;
+  box-sizing: border-box;
+}
+
+body.catp-open #navbar,
+body.catp-open header,
+body.catp-open [data-topbar],
+body.catp-open #footer,
+body.catp-open footer {
+  padding-right: var(--catp-sidebar-width);
+}
+
+body.catp-open .catp-float {
+  transform: translateX(calc(-50% - (var(--catp-sidebar-width) / 2)));
 }
 
 @media (max-width: 720px) {
@@ -393,8 +411,20 @@ body.catp-open {
     width: calc(100vw - 16px);
   }
 
+  body.catp-open {
+    padding-right: 0 !important;
+  }
+
+  body.catp-open #navbar,
+  body.catp-open header,
+  body.catp-open [data-topbar],
+  body.catp-open #footer,
+  body.catp-open footer {
+    padding-right: 0;
+  }
+
   .catp-ask-btn .catp-kbd,
-  .catp-ask-btn-label {
+  .catp-ask-btn .catp-ask-btn-label {
     display: none;
   }
 }

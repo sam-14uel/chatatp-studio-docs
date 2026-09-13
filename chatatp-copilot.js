@@ -105,12 +105,11 @@
       <div class="catp-float" id="catp-float">
         <span class="catp-float-icon">${sparkle}</span>
         <input class="catp-float-input" id="catp-float-input" placeholder="${escapeHtml(
-          CONFIG.placeholder
-        )}" autocomplete="off" />
+      CONFIG.placeholder
+    )}" autocomplete="off" />
         <button type="button" class="catp-float-send" id="catp-float-send">Ask Copilot</button>
       </div>
-      <div class="catp-backdrop" id="catp-backdrop"></div>
-      <aside class="catp-sidebar" id="catp-sidebar" role="dialog" aria-label="ChatATP Copilot">
+      <aside class="catp-sidebar" id="catp-sidebar" role="complementary" aria-label="ChatATP Copilot">
         <header class="catp-head">
           <div class="catp-head-title">
             <strong>${escapeHtml(CONFIG.title)}</strong>
@@ -123,11 +122,12 @@
         <form class="catp-composer" id="catp-form">
           <div class="catp-composer-box">
             <textarea id="catp-input" rows="1" placeholder="${escapeHtml(
-              CONFIG.placeholder
-            )}"></textarea>
+      CONFIG.placeholder
+    )}"></textarea>
             <button type="submit" class="catp-send" id="catp-send" disabled>${sendIcon}</button>
           </div>
           <div class="catp-disclaimer">Answers can be wrong. Check the docs when it matters.</div>
+          <div class="catp-powered">Powered by <a href="https://studio.chat-atp.com" target="_blank" rel="noreferrer">ChatATP Studio</a></div>
         </form>
       </aside>
     `;
@@ -136,7 +136,6 @@
     els.float = document.getElementById("catp-float");
     els.floatInput = document.getElementById("catp-float-input");
     els.floatSend = document.getElementById("catp-float-send");
-    els.backdrop = document.getElementById("catp-backdrop");
     els.sidebar = document.getElementById("catp-sidebar");
     els.messages = document.getElementById("catp-messages");
     els.input = document.getElementById("catp-input");
@@ -145,7 +144,6 @@
 
     document.getElementById("catp-close").addEventListener("click", close);
     document.getElementById("catp-new").addEventListener("click", resetChat);
-    els.backdrop.addEventListener("click", close);
     els.floatSend.addEventListener("click", submitFromFloat);
     els.floatInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
@@ -197,8 +195,8 @@
   function open(prefill) {
     state.open = true;
     els.sidebar.classList.add("open");
-    els.backdrop.classList.add("open");
     els.float.classList.add("catp-hidden");
+    document.documentElement.classList.add("catp-open");
     document.body.classList.add("catp-open");
     if (prefill) els.input.value = prefill;
     els.send.disabled = state.busy || !els.input.value.trim();
@@ -208,8 +206,8 @@
   function close() {
     state.open = false;
     els.sidebar.classList.remove("open");
-    els.backdrop.classList.remove("open");
     els.float.classList.remove("catp-hidden");
+    document.documentElement.classList.remove("catp-open");
     document.body.classList.remove("catp-open");
   }
 
@@ -230,14 +228,14 @@
           <p>${escapeHtml(CONFIG.emptySubheading)}</p>
           <div class="catp-starters">
             ${CONFIG.starters
-              .map(
-                (item, index) => `
+          .map(
+            (item, index) => `
               <button type="button" class="catp-starter" data-starter="${index}">
                 ${escapeHtml(item.title)}
                 <small>${escapeHtml(item.subtitle)}</small>
               </button>`
-              )
-              .join("")}
+          )
+          .join("")}
           </div>
         </div>
       `;
@@ -262,9 +260,8 @@
         return `
           <div class="catp-row ${message.role}">
             ${avatar}
-            <div class="catp-bubble">${
-              message.role === "agent" ? renderMarkdown(message.content) : escapeHtml(message.content)
-            }</div>
+            <div class="catp-bubble">${message.role === "agent" ? renderMarkdown(message.content) : escapeHtml(message.content)
+          }</div>
           </div>
         `;
       })

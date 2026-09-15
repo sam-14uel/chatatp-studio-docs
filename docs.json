@@ -43,6 +43,7 @@
             "pages": [
               "introduction",
               "quickstart",
+              "rule-based-chatbots",
               "embedding",
               "cli/overview"
             ]

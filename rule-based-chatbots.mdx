@@ -1,0 +1,215 @@
+---
+title: Rule-Based Chatbots
+description: Build deterministic chatbot workflows with triggers, actions, routes, responses, MCP tools, and HTTP tools.
+---
+
+Rule-Based Chatbots are deterministic, token-free workflows. They do not invoke an LLM. Each incoming message follows this model:
+
+```text
+Trigger -> Action -> Success or Failure -> Response or Next Node
+```
+
+## Enable the mode
+
+1. Open an agent in Studio.
+2. Open **Overview**.
+3. Set **Conversation mode** to **Rule-Based Chatbot**.
+4. Open **Rule Flow**.
+5. Create and save the nodes and actions.
+
+Rule bots use the existing messaging pipeline, channel adapters, MCP connections, and HTTP connections.
+
+## Nodes
+
+A node is one deterministic step in the conversation.
+
+| Field | Meaning |
+| --- | --- |
+| **Title** | Name shown in the builder. |
+| **Trigger type** | How the node is selected. |
+| **Trigger value** | Command, keyword, exact text, or interaction value to match. |
+| **Response** | Text returned after the node succeeds. |
+| **Failure response** | Safe text returned when an action fails. |
+| **Enabled** | Whether this node can be matched. |
+
+Supported trigger types:
+
+- `slash_command`: `/start`, `/help`, or another command.
+- `button_click`: a button or interaction payload.
+- `menu_selection`: a platform menu selection.
+- `keyword`: a supported keyword/text match.
+- `text`: an exact text match.
+
+## Actions and routes
+
+Actions are interactions attached to a node. The builder's **Save** button persists the node and action fields. If the node has no action yet, Save creates one when action settings have been entered.
+
+| Field | Meaning |
+| --- | --- |
+| **Action type** | Response, route, MCP action, or HTTP action. |
+| **Action label** | Visible button/menu text. |
+| **Action payload** | Stable value sent back when selected. |
+| **On success, continue to** | Target node. Empty means the flow ends. |
+| **Failure response** | User-facing fallback for failed actions. |
+
+Action types:
+
+- **Response only**: return the node response and end.
+- **Route to another node**: continue to the selected node.
+- **Route by slash command, keyword, or menu selection**: use the configured payload as the next route.
+- **Execute MCP tool**: run an existing MCP tool attached to the agent.
+- **Execute HTTP tool**: run an existing HTTP API tool attached to the agent.
+- **Execute action + continue**: run a tool, then route on success.
+
+The action payload is the routing value. Keep it stable even if the visible label changes.
+
+## Recipe: welcome menu
+
+Create a node:
+
+```text
+Title: Start
+Trigger type: Slash command
+Trigger value: /start
+Response: Welcome. Choose an option below.
+```
+
+Add two actions:
+
+```text
+Label: View services
+Payload: services
+On success: Services
+```
+
+```text
+Label: Contact support
+Payload: support
+On success: Support
+```
+
+Create `Services` and `Support` nodes with their own responses.
+
+```text
+/start -> Start
+          |-> View services -> Services
+          |-> Contact support -> Support
+```
+
+## Recipe: HTTP lookup
+
+Configure an action with:
+
+```text
+Action type: Execute HTTP tool
+Action label: Check status
+Action payload: check_status
+On success: Status result
+Failure response: We could not retrieve the status right now.
+```
+
+Use workflow variables in the tool arguments:
+
+```json
+{
+  "variables": {
+    "reference": "{{workflow.reference}}"
+  }
+}
+```
+
+Configure the result node response:
+
+```text
+Current status: {{tool_result}}
+```
+
+## Recipe: MCP action
+
+Attach an MCP connection to the agent, then configure:
+
+```text
+Action type: Execute MCP tool
+Action label: Run verification
+Action payload: verify
+On success: Verification result
+Failure response: Verification is temporarily unavailable.
+```
+
+The rule engine passes the configured arguments to the existing MCP executor. Domain-specific interpretation belongs in the tool schema, not in the rule engine.
+
+## Recipe: multi-step flow
+
+Use one node for each step:
+
+```text
+/start
+  -> Collect name
+  -> Collect email
+  -> Confirm details
+  -> Execute action
+  -> Complete
+```
+
+Use workflow state and templates to carry values forward. Use `/cancel` to reset a conversation during a multi-step flow.
+
+## Templates
+
+Responses can reference the latest action result:
+
+```text
+The result is: {{tool_result}}
+```
+
+Tool arguments can reference workflow state:
+
+```json
+{
+  "arguments": {
+    "reference": "{{workflow.reference}}"
+  }
+}
+```
+
+## Platform behavior
+
+The backend emits platform-neutral interactions. Adapters translate them into each channel's supported markup, including Web Chat, WhatsApp, Telegram, Slack, and Discord.
+
+The same label and payload are therefore reusable across channels.
+
+## Testing checklist
+
+Test all of the following before deployment:
+
+- `/start` or the first entry trigger
+- Every button payload
+- Response-only actions
+- Successful MCP and HTTP actions
+- Failed actions and configured fallback text
+- Success routes to another node
+- A node with no target, which should end the flow
+- `/cancel` during a multi-step flow
+- Agent Preview and Web Chat
+- Native button rendering on every connected platform
+
+## Troubleshooting
+
+### The node does not match
+
+Check that the node is enabled and that the trigger type and value match the incoming text or payload.
+
+### A button appears but does not route
+
+Check that its action payload is saved and that the target node belongs to the same agent.
+
+### The action succeeds but the response is empty
+
+Check the target node response and template names. Use `{{tool_result}}` for the latest action result.
+
+### The tool fails
+
+Configure a failure response on the action. Internal executor errors should not be exposed to users.
+
+### No LLM response appears
+
+That is expected. Rule-Based Chatbots intentionally bypass the LLM pipeline.

@@ -1,0 +1,27 @@
+---
+title: OAuth userinfo
+description: Retrieve the authorized ChatATP Studio user's identity claims
+api: "GET /oauth/userinfo/"
+---
+
+Returns identity claims for the user who granted the OAuth consent. The access token must include the `users:read` scope.
+
+```bash cURL
+curl https://chatatp-agent-builder-backend.onrender.com/oauth/userinfo/ \
+  -H "Authorization: Bearer $CHATATP_ACCESS_TOKEN"
+```
+
+```json
+{
+  "sub": "42",
+  "id": 42,
+  "email": "person@example.com",
+  "email_verified": true,
+  "name": "Person Example",
+  "given_name": "Person",
+  "family_name": "Example",
+  "picture": "https://cdn.example.com/avatar.png"
+}
+```
+
+Use `sub` as the stable external identity key. Email addresses can change and should not be used as the primary identifier.

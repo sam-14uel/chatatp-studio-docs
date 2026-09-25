@@ -45,6 +45,8 @@ const tokens = await oauth.exchangeCode({
 
 const studio = new ChatATPClient({ apiKey: tokens!.access_token });
 const agents = await studio.agents.list();
+const identity = await oauth.userinfo(tokens!.access_token);
+console.log(identity.sub, identity.email, identity.name);
 ```
 
 Keep the access and refresh tokens on your server. Do not put a client secret or refresh token in browser code.
@@ -64,4 +66,4 @@ Access tokens expire after one hour. Refresh tokens are rotated on every refresh
 
 ## Supported scopes
 
-`agents:read`, `agents:write`, `conversations:read`, `conversations:write`, `messages:send`, `knowledge:read`, `knowledge:write`, `memory:read`, `memory:write`, `channels:read`, `channels:write`, and `users:read`.
+`agents:read`, `agents:write`, `conversations:read`, `conversations:write`, `messages:send`, `knowledge:read`, `knowledge:write`, `memory:read`, `memory:write`, `channels:read`, `channels:write`, and `users:read`. The `users:read` scope enables `oauth.userinfo()`.

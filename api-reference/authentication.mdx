@@ -3,45 +3,92 @@ title: "Authentication"
 description: "Authenticate raw HTTPS requests to the Developer API"
 ---
 
-All `/v1/` requests require a Developer API key from the ChatATP Studio dashboard.
+All requests to `/v1/` endpoints require a valid Bearer token in the `Authorization` header.
 
-## Header
+## Supported Bearer Tokens
 
-```
-Authorization: Bearer chatatp_sk_...
+The ChatATP Studio API supports two types of Bearer tokens:
+
+| Token Type | Prefix | Format / Source | When to Use |
+|---|---|---|---|
+| **Developer API Key** | `chatatp_sk_` | Generated in the ChatATP Studio dashboard (**Developer → API keys**) | Backend servers, direct integrations, and automated pipelines |
+| **OAuth Access Token** | `cat_access_` | Returned as `access_token` from `POST /oauth/token/` | 3rd-party user-facing apps where users authorize access via OAuth 2.1 |
+
+## Header Format
+
+Regardless of whether you use an API Key or an OAuth Access Token, use the standard `Bearer` authentication scheme:
+
+```http
+Authorization: Bearer <YOUR_TOKEN>
 Content-Type: application/json
 ```
 
+### Direct Developer API Key Example
+```http
+Authorization: Bearer chatatp_sk_live_abc123...
+Content-Type: application/json
+```
+
+### OAuth 2.1 Access Token Example
+```http
+Authorization: Bearer cat_access_def456...
+Content-Type: application/json
+```
+
+<Note>
+  **What do I put in the Bearer token for the OAuth part?**
+  
+  When an OAuth authorization code is exchanged via `POST /oauth/token/`, the response body contains:
+  ```json
+  {
+    "access_token": "cat_access_...",
+    "token_type": "Bearer",
+    "expires_in": 3600,
+    "refresh_token": "cat_refresh_...",
+    "scope": "agents:read messages:send"
+  }
+  ```
+  Pass the value of `access_token` (`cat_access_...`) directly in your request's `Authorization: Bearer cat_access_...` header.
+</Note>
+
 <Warning>
-  Never log or commit API keys. The SDKs redact keys even when `debug` is enabled.
+  Never log, commit, or expose API keys or client secrets in client-side code. Public OAuth clients must authenticate with PKCE instead of client secrets.
 </Warning>
 
-## cURL
+## Code Examples
+
+### cURL
 
 ```bash
+# Using Developer API Key
 curl https://chatatp-agent-builder-backend.onrender.com/v1/agents/ \
   -H "Authorization: Bearer $CHATATP_API_KEY" \
   -H "Content-Type: application/json"
+
+# Using OAuth Access Token
+curl https://chatatp-agent-builder-backend.onrender.com/v1/agents/ \
+  -H "Authorization: Bearer $CHATATP_ACCESS_TOKEN" \
+  -H "Content-Type: application/json"
 ```
 
-## JavaScript (fetch)
+### JavaScript / TypeScript (fetch)
 
 ```javascript
 const res = await fetch("https://chatatp-agent-builder-backend.onrender.com/v1/agents/", {
   headers: {
-    Authorization: `Bearer ${process.env.CHATATP_API_KEY}`,
+    Authorization: `Bearer ${token}`, // Pass either chatatp_sk_... or cat_access_...
     "Content-Type": "application/json",
   },
 });
 ```
 
-## Python (httpx)
+### Python (httpx)
 
 ```python
 import os, httpx
 
 headers = {
-    "Authorization": f"Bearer {os.environ['CHATATP_API_KEY']}",
+    "Authorization": f"Bearer {token}",  # Pass either chatatp_sk_... or cat_access_...
     "Content-Type": "application/json",
 }
 async with httpx.AsyncClient(base_url="https://chatatp-agent-builder-backend.onrender.com") as client:
@@ -54,8 +101,8 @@ async with httpx.AsyncClient(base_url="https://chatatp-agent-builder-backend.onr
 | Status | SDK exception | Meaning |
 |---|---|---|
 | `400` | `ValidationError` | Invalid body or query |
-| `401` | `AuthenticationError` | Missing or invalid key |
-| `403` | `PermissionError` | Key cannot access the resource |
+| `401` | `AuthenticationError` | Missing, invalid, or expired key/token |
+| `403` | `PermissionError` | Token does not have permission/scope for the resource |
 | `404` | `NotFoundError` | Resource does not exist |
 | `429` | `RateLimitError` | Too many requests |
 | `5xx` | `ServerError` | Upstream failure |

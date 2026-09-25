@@ -47,6 +47,10 @@ async with OAuthClient() as oauth:
 
 async with ChatATPClient.from_oauth(tokens.access_token) as client:
     agents = await client.agents.list()
+
+async with OAuthClient() as oauth:
+    identity = await oauth.userinfo(tokens.access_token)
+    print(identity["sub"], identity["email"], identity["name"])
 ```
 
 Keep the access and refresh tokens on your server. Do not put a client secret or refresh token in browser code.
@@ -66,4 +70,4 @@ Access tokens expire after one hour. Refresh tokens are rotated on every refresh
 
 ## Supported scopes
 
-`agents:read`, `agents:write`, `conversations:read`, `conversations:write`, `messages:send`, `knowledge:read`, `knowledge:write`, `memory:read`, `memory:write`, `channels:read`, `channels:write`, and `users:read`.
+`agents:read`, `agents:write`, `conversations:read`, `conversations:write`, `messages:send`, `knowledge:read`, `knowledge:write`, `memory:read`, `memory:write`, `channels:read`, `channels:write`, and `users:read`. The `users:read` scope enables `oauth.userinfo()`.

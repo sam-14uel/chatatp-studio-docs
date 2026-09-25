@@ -127,7 +127,8 @@
             "pages": [
               "api-reference/oauth/authorize",
               "api-reference/oauth/token",
-              "api-reference/oauth/revoke"
+              "api-reference/oauth/revoke",
+              "api-reference/oauth/userinfo"
             ]
           },
           {

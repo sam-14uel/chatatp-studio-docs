@@ -43,3 +43,12 @@ Refresh tokens rotate. Store the new `refresh_token` and discard the previous on
   "scope": "agents:read messages:send"
 }
 ```
+
+<Tip>
+  **Using the access token:**
+  
+  Include the returned `access_token` in the `Authorization` header as a Bearer token on all subsequent Developer API requests:
+  ```http
+  Authorization: Bearer cat_access_...
+  ```
+</Tip>

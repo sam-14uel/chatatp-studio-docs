@@ -1,0 +1,45 @@
+---
+title: OAuth token
+description: Exchange authorization codes and rotate refresh tokens
+api: "POST /oauth/token/"
+---
+
+Exchange the single-use authorization code returned to your redirect URI. Send OAuth token requests as `application/x-www-form-urlencoded`.
+
+## Authorization code exchange
+
+```bash cURL
+curl -X POST https://chatatp-agent-builder-backend.onrender.com/oauth/token/ \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=authorization_code" \
+  --data-urlencode "client_id=$CHATATP_CLIENT_ID" \
+  --data-urlencode "code=$CODE" \
+  --data-urlencode "redirect_uri=https://your-app.example.com/oauth/callback" \
+  --data-urlencode "code_verifier=$CODE_VERIFIER"
+```
+
+Confidential clients must also send `client_secret`. Public clients authenticate with PKCE instead.
+
+## Refresh
+
+```bash cURL
+curl -X POST https://chatatp-agent-builder-backend.onrender.com/oauth/token/ \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=refresh_token" \
+  --data-urlencode "client_id=$CHATATP_CLIENT_ID" \
+  --data-urlencode "refresh_token=$CHATATP_REFRESH_TOKEN"
+```
+
+Refresh tokens rotate. Store the new `refresh_token` and discard the previous one.
+
+## Response
+
+```json
+{
+  "access_token": "cat_access_...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "cat_refresh_...",
+  "scope": "agents:read messages:send"
+}
+```

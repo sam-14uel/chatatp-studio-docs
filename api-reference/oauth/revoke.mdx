@@ -1,0 +1,16 @@
+---
+title: OAuth revoke
+description: Revoke an OAuth access or refresh token
+api: "POST /oauth/revoke/"
+---
+
+Revocation is idempotent. The endpoint returns `200` whether the token was active, already revoked, or unknown.
+
+```bash cURL
+curl -X POST https://chatatp-agent-builder-backend.onrender.com/oauth/revoke/ \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "token=$CHATATP_REFRESH_TOKEN" \
+  --data-urlencode "client_id=$CHATATP_CLIENT_ID"
+```
+
+Use the refresh token to disconnect an app session, or revoke an access token immediately after a user disconnects the app.

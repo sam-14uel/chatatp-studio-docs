@@ -1,0 +1,67 @@
+---
+title: OAuth 2.1
+description: Connect users to ChatATP Studio with OAuth 2.1 and PKCE
+---
+
+Use OAuth when your application needs a user-authorized connection to a ChatATP Studio workspace. Public clients must use PKCE with `S256`.
+
+## 1. Generate the authorization URL
+
+The consent screen is hosted by Studio at `https://studio.chat-atp.com/oauth/authorize/`. Register the exact `redirectUri` in **Account → Developers → OAuth Apps**.
+
+```typescript
+import { ChatATPClient, OAuthClient } from "@chatatp/studio";
+
+const oauth = new OAuthClient();
+const { verifier, challenge } = await OAuthClient.createPkce();
+const state = crypto.randomUUID();
+
+const authorizationUrl = oauth.authorizationUrl({
+  clientId: process.env.CHATATP_CLIENT_ID!,
+  redirectUri: "https://your-app.example.com/oauth/callback",
+  scopes: ["agents:read", "conversations:read", "messages:send"],
+  state,
+  codeChallenge: challenge,
+  codeChallengeMethod: "S256",
+});
+
+// Store state and verifier in the user's server-side session.
+// Redirect the user's browser to authorizationUrl.
+```
+
+> Use `OAuthClient.createPkce()` when importing `OAuthClient` directly. The `client.oauth` property is an instance of the same helper.
+
+## 2. Exchange the callback code
+
+Your registered redirect URI receives `code` and `state`. Validate `state` against the value stored in the user's session before exchanging the code.
+
+```typescript
+const tokens = await oauth.exchangeCode({
+  clientId: process.env.CHATATP_CLIENT_ID!,
+  code: callbackUrl.searchParams.get("code")!,
+  redirectUri: "https://your-app.example.com/oauth/callback",
+  codeVerifier: verifier,
+});
+
+const studio = new ChatATPClient({ apiKey: tokens!.access_token });
+const agents = await studio.agents.list();
+```
+
+Keep the access and refresh tokens on your server. Do not put a client secret or refresh token in browser code.
+
+## 3. Refresh and revoke
+
+```typescript
+const nextTokens = await client.oauth.refresh({
+  clientId: process.env.CHATATP_CLIENT_ID!,
+  refreshToken: tokens!.refresh_token,
+});
+
+await client.oauth.revoke(nextTokens!.refresh_token, process.env.CHATATP_CLIENT_ID);
+```
+
+Access tokens expire after one hour. Refresh tokens are rotated on every refresh, so replace the stored refresh token with the returned value.
+
+## Supported scopes
+
+`agents:read`, `agents:write`, `conversations:read`, `conversations:write`, `messages:send`, `knowledge:read`, `knowledge:write`, `memory:read`, `memory:write`, `channels:read`, `channels:write`, and `users:read`.

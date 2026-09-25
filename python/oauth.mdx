@@ -1,0 +1,69 @@
+---
+title: OAuth 2.1
+description: Connect users to ChatATP Studio with OAuth 2.1 and PKCE
+---
+
+Use OAuth when your application needs a user-authorized connection to a ChatATP Studio workspace. Public clients must use PKCE with `S256`.
+
+## 1. Generate the authorization URL
+
+The consent screen is hosted by Studio at `https://studio.chat-atp.com/oauth/authorize/`. Register the exact `redirect_uri` in **Account → Developers → OAuth Apps**.
+
+```python
+import secrets
+from chatatp_studio import OAuthClient
+
+oauth = OAuthClient()
+verifier, challenge = OAuthClient.create_pkce()
+state = secrets.token_urlsafe(32)
+
+authorization_url = oauth.authorization_url(
+    client_id="your-client-id",
+    redirect_uri="https://your-app.example.com/oauth/callback",
+    scopes=["agents:read", "conversations:read", "messages:send"],
+    state=state,
+    code_challenge=challenge,
+    code_challenge_method="S256",
+)
+
+# Store state and verifier in the user's server-side session.
+# Redirect the user's browser to authorization_url.
+```
+
+## 2. Exchange the callback code
+
+Your registered redirect URI receives `code` and `state`. Validate `state` against the value stored in the user's session before exchanging the code.
+
+```python
+from chatatp_studio import ChatATPClient
+
+async with OAuthClient() as oauth:
+    tokens = await oauth.exchange_code(
+        client_id="your-client-id",
+        code=callback_code,
+        redirect_uri="https://your-app.example.com/oauth/callback",
+        code_verifier=verifier,
+    )
+
+async with ChatATPClient.from_oauth(tokens.access_token) as client:
+    agents = await client.agents.list()
+```
+
+Keep the access and refresh tokens on your server. Do not put a client secret or refresh token in browser code.
+
+## 3. Refresh and revoke
+
+```python
+async with OAuthClient() as oauth:
+    next_tokens = await oauth.refresh(
+        client_id="your-client-id",
+        refresh_token=tokens.refresh_token,
+    )
+    await oauth.revoke(next_tokens.refresh_token, client_id="your-client-id")
+```
+
+Access tokens expire after one hour. Refresh tokens are rotated on every refresh, so replace the stored refresh token with the returned value.
+
+## Supported scopes
+
+`agents:read`, `agents:write`, `conversations:read`, `conversations:write`, `messages:send`, `knowledge:read`, `knowledge:write`, `memory:read`, `memory:write`, `channels:read`, `channels:write`, and `users:read`.

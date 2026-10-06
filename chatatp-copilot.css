@@ -32,7 +32,7 @@ html.dark,
   height: 36px;
   padding: 0 12px;
   margin-left: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--catp-accent);
   border-radius: 10px;
   background: var(--background-light, var(--background));
   color: var(--gray-900, inherit);
@@ -47,6 +47,7 @@ html.dark,
 .catp-ask-btn:hover {
   border-color: var(--catp-accent);
   color: var(--catp-accent);
+  background: color-mix(in srgb, var(--catp-accent) 8%, var(--background, #fff));
 }
 
 .catp-ask-btn svg {
@@ -602,7 +603,27 @@ html.dark,
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--catp-muted);
+}
+
+.catp-tool-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 4px;
+}
+
+header a[href="https://studio.chat-atp.com/dashboard"] {
+  border-radius: 10px !important;
+  background: #6366f1 !important;
+  color: #fff !important;
+  font-weight: 650;
+  transition: background-color 140ms ease;
+}
+
+header a[href="https://studio.chat-atp.com/dashboard"]:hover {
+  background: #4f46e5 !important;
+  color: #fff !important;
 }
 
 .catp-tool-pane pre {

@@ -481,11 +481,17 @@
         </button>
         <div class="catp-tool-body">
           <div class="catp-tool-pane">
+            <div class="catp-tool-label-row">
               <div class="catp-tool-label">Request parameters</div>
+              <button type="button" class="catp-copy-btn" data-copy-tool="request" title="Copy request parameters">${ICONS.copy}<span>Copy</span></button>
+            </div>
             <pre>${escapeHtml(pretty(tool.request))}</pre>
           </div>
           <div class="catp-tool-pane">
-            <div class="catp-tool-label">Response</div>
+            <div class="catp-tool-label-row">
+              <div class="catp-tool-label">Response</div>
+              <button type="button" class="catp-copy-btn" data-copy-tool="response" title="Copy tool response">${ICONS.copy}<span>Copy</span></button>
+            </div>
             <pre>${escapeHtml(tool.status === "running" ? "Running…" : pretty(tool.response))}</pre>
           </div>
         </div>
@@ -609,20 +615,24 @@
   }
 
   async function onMessageClick(event) {
-    const copyButton = event.target.closest("[data-copy-message], [data-copy-code], [data-copy-table]");
+    const copyButton = event.target.closest("[data-copy-message], [data-copy-code], [data-copy-table], [data-copy-tool]");
     if (copyButton) {
       let content = "";
       if (copyButton.hasAttribute("data-copy-message")) {
         content = state.messages[Number(copyButton.dataset.copyMessage)]?.content || "";
       } else if (copyButton.hasAttribute("data-copy-code")) {
         content = copyButton.closest(".catp-code-block")?.querySelector("pre code")?.textContent || "";
-      } else {
+      } else if (copyButton.hasAttribute("data-copy-table")) {
         const table = copyButton.closest(".catp-table-wrap")?.querySelector("table");
         content = table
           ? [...table.rows]
               .map((row) => [...row.cells].map((cell) => cell.textContent.trim()).join("\t"))
               .join("\n")
           : "";
+      } else {
+        const toolBlock = copyButton.closest(".catp-tool");
+        const tool = state.messages[Number(toolBlock?.dataset.msg)]?.tools?.[Number(toolBlock?.dataset.tool)];
+        content = pretty(copyButton.dataset.copyTool === "request" ? tool?.request : tool?.response);
       }
       const label = copyButton.querySelector("span");
       if (!content || !label) return;

@@ -103,9 +103,14 @@
     else localStorage.removeItem(ACTIVE_KEY);
   }
 
-  function pageToArray(page) {
+  async function pageToArray(page) {
     if (!page) return [];
     if (Array.isArray(page)) return page;
+    if (typeof page[Symbol.asyncIterator] === "function") {
+      const items = [];
+      for await (const item of page) items.push(item);
+      return items;
+    }
     if (typeof page.toArray === "function") return page.toArray();
     return page.data || page.results || page.items || [];
   }
@@ -115,16 +120,15 @@
     return {
       id,
       conversationId: id,
-      title: row.title || row.user_display_name || firstUserText(row) || `Conversation #${id}`,
-      preview: row.last_message || row.preview || row.user_display_name || "Open conversation",
+      title: row.title || firstUserText(row) || `Conversation #${id}`,
+      preview: row.last_message || row.preview || firstUserText(row) || "Open conversation",
       updatedAt: Date.parse(row.last_message_at || row.updated_at || row.created_at || "") || Date.now(),
     };
   }
 
   function firstUserText(row) {
-    if (row && row.last_user_message) return String(row.last_user_message).slice(0, 48);
-    const msg = state.messages.find((m) => m.role === "user");
-    return msg ? String(msg.content || "").trim() : "";
+    const text = row?.first_user_message || row?.last_user_message || "";
+    return String(text).trim().slice(0, 48);
   }
 
   async function loadSessions() {
@@ -148,10 +152,6 @@
       state.loadingHistory = false;
       render();
     }
-  }
-
-  function pageContext() {
-    return { url: location.href, path: location.pathname, title: document.title };
   }
 
   function escapeHtml(value) {
@@ -357,26 +357,13 @@
   }
 
   async function resetChat() {
+    if (state.busy) return;
     state.conversationId = null;
     state.messages = [];
     state.view = "chat";
     persistActive();
     render();
     els.input.focus();
-    try {
-      const client = await ensureClient();
-      const created = await client.conversations.create({
-        agent_id: CONFIG.agentId,
-        external_user_id: state.visitorId,
-        user_display_name: resolveDocsDisplayName(),
-      });
-      if (created?.id) {
-        state.conversationId = Number(created.id);
-        persistActive();
-      }
-    } catch (error) {
-      console.warn("Could not create conversation", error);
-    }
   }
 
   function setTyping(on) {
@@ -547,7 +534,7 @@
 
   async function openThread(threadId) {
     const id = Number(threadId);
-    if (!id) return;
+    if (!id || state.busy) return;
     state.conversationId = id;
     state.view = "chat";
     persistActive();
@@ -618,60 +605,67 @@
     render();
     open();
 
-    const context = pageContext();
-    const prompt = `The user is reading ${context.title} (${context.path}).\n\n${text}`;
-
     try {
       const client = await ensureClient();
-      const stream = state.conversationId
-        ? client.messages.stream(state.conversationId, { content: prompt })
-        : client.chatStream({
-            agent_id: CONFIG.agentId,
-            external_user_id: state.visitorId,
-            user_display_name: resolveDocsDisplayName(),
-            message: prompt,
-            metadata: {
-              source: "mintlify-docs",
-              source_domain: location.hostname,
-              auth_source: getSessionAuth().user_identifier ? "chatatp_session" : "anonymous_docs",
-              email: getSessionAuth().email || "",
-              full_name: getSessionAuth().full_name || "",
-              user_identifier: getSessionAuth().user_identifier || "",
-              ...context,
-            },
-          });
-
-      for await (const event of stream) {
-        captureConversation(event);
-        if (event.type === "tool.execution.started") {
-          upsertTool(event.data || {}, "running");
-          render();
-        }
-        if (event.type === "tool.execution.completed") {
-          upsertTool(event.data || {}, event.data?.ok === false ? "failed" : "success");
-          render();
-        }
-        if (event.type === "agent.response.delta") {
-          const last = currentAgent();
-          if (last) last.content += extractDelta(event.data);
-          render();
-        }
-        if (event.type === "agent.response.completed") {
-          const last = currentAgent();
-          const finalText =
-            extractDelta(event.data) || event.data?.agent_message?.content || last?.content;
-          if (last) last.content = finalText || last.content;
-          if (Array.isArray(event.data?.tool_calls)) {
-            event.data.tool_calls.forEach((tool) => upsertTool(tool, "success"));
+      if (state.conversationId) {
+        const result = await client.messages.send(state.conversationId, { content: text });
+        const last = currentAgent();
+        if (last) {
+          last.content = result.agent_message?.content || result.content || "";
+          const tools = result.agent_message?.tool_calls || result.tool_calls;
+          if (Array.isArray(tools)) {
+            last.tools = tools.map((tool) => normalizeTool(tool, "success"));
           }
-          setTyping(false);
-          persistActive();
-          render();
-          loadSessions();
         }
-        if (event.type === "error") {
-          throw new Error(extractDelta(event.data) || event.data?.message || "The agent could not answer.");
+        setTyping(false);
+        render();
+      } else {
+        const stream = client.chatStream({
+          agent_id: CONFIG.agentId,
+          external_user_id: state.visitorId,
+          user_display_name: resolveDocsDisplayName(),
+          message: text,
+          metadata: {
+            source: "mintlify-docs",
+            auth_source: getSessionAuth().user_identifier ? "chatatp_session" : "anonymous_docs",
+            email: getSessionAuth().email || "",
+            full_name: getSessionAuth().full_name || "",
+            user_identifier: getSessionAuth().user_identifier || "",
+          },
+        });
+
+        for await (const event of stream) {
+          captureConversation(event);
+          if (event.type === "tool.execution.started") {
+            upsertTool(event.data || {}, "running");
+            render();
+          }
+          if (event.type === "tool.execution.completed") {
+            upsertTool(event.data || {}, event.data?.ok === false ? "failed" : "success");
+            render();
+          }
+          if (event.type === "agent.response.delta") {
+            const last = currentAgent();
+            if (last) last.content += extractDelta(event.data);
+            render();
+          }
+          if (event.type === "agent.response.completed") {
+            const last = currentAgent();
+            const finalText =
+              extractDelta(event.data) || event.data?.agent_message?.content || last?.content;
+            if (last) last.content = finalText || last.content;
+            if (Array.isArray(event.data?.tool_calls)) {
+              event.data.tool_calls.forEach((tool) => upsertTool(tool, "success"));
+            }
+            setTyping(false);
+            persistActive();
+            render();
+          }
+          if (event.type === "error") {
+            throw new Error(extractDelta(event.data) || event.data?.message || "The agent could not answer.");
+          }
         }
+
       }
 
       const last = currentAgent();

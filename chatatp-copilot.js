@@ -62,6 +62,7 @@
 
   const ICONS = {
     robot: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M9 13v2M15 13v2"/></svg>`,
+    copy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>`,
     close: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
     plus: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`,
     send: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h12M13 6l6 6-6 6"/></svg>`,
@@ -79,6 +80,7 @@
     typing: false,
     loadingConversation: false,
     conversationLoadToken: 0,
+    forceScrollToBottom: false,
     client: null,
     marked: null,
     domPurify: null,
@@ -193,7 +195,57 @@
     }
 
     const html = state.marked.parse(source, { gfm: true, breaks: true });
-    return state.domPurify.sanitize(html, { USE_PROFILES: { html: true } });
+    const safeHtml = state.domPurify.sanitize(html, { USE_PROFILES: { html: true } });
+    return addMarkdownCopyControls(safeHtml);
+  }
+
+  function addMarkdownCopyControls(html) {
+    const template = document.createElement("template");
+    template.innerHTML = html;
+
+    template.content.querySelectorAll("pre").forEach((pre) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "catp-code-block";
+      const header = document.createElement("div");
+      header.className = "catp-code-header";
+      const code = pre.querySelector("code");
+      const languageClass = [...(code?.classList || [])].find((name) => name.startsWith("language-"));
+      const language = document.createElement("span");
+      language.textContent = languageClass ? languageClass.slice("language-".length) : "Code";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "catp-copy-btn";
+      button.dataset.copyCode = "";
+      button.title = "Copy code";
+      button.innerHTML = `${ICONS.copy}<span>Copy</span>`;
+      header.append(language, button);
+      pre.parentNode.insertBefore(wrapper, pre);
+      wrapper.append(header, pre);
+    });
+
+    template.content.querySelectorAll("table").forEach((table) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "catp-table-wrap";
+      const header = document.createElement("div");
+      header.className = "catp-table-header";
+      const label = document.createElement("span");
+      label.textContent = "Table";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "catp-copy-btn";
+      button.dataset.copyTable = "";
+      button.title = "Copy table";
+      button.innerHTML = `${ICONS.copy}<span>Copy</span>`;
+      const content = document.createElement("div");
+      content.className = "catp-table-content";
+      header.append(label, button);
+      table.parentNode.insertBefore(wrapper, table);
+      table.parentNode.removeChild(table);
+      content.appendChild(table);
+      wrapper.append(header, content);
+    });
+
+    return template.innerHTML;
   }
 
   function ensureMarkdown() {
@@ -224,6 +276,9 @@
   }
 
   function normalizeTool(raw, fallbackStatus) {
+    raw = raw || {};
+    const nestedCall = raw.tool_call || raw.call || {};
+    const nestedFunction = raw.function || nestedCall.function || {};
     const ok = raw.ok !== false && raw.status !== "error" && raw.status !== "failed";
     let status = fallbackStatus || raw.status;
     if (status === "started") status = "running";
@@ -231,10 +286,10 @@
     if (status === "error") status = "failed";
     if (!status) status = ok ? "success" : "running";
     return {
-      id: String(raw.id || raw.tool_call_id || raw.name || Math.random()),
-      name: raw.name || raw.tool || "tool",
-      request: raw.arguments ?? raw.args ?? raw.request ?? {},
-      response: raw.result ?? raw.response ?? raw.output ?? "",
+      id: String(raw.id || raw.tool_call_id || nestedCall.id || nestedCall.tool_call_id || raw.name || nestedFunction.name || Math.random()),
+      name: raw.name || raw.tool_name || (typeof raw.tool === "string" ? raw.tool : "") || nestedCall.name || nestedFunction.name || "tool",
+      request: raw.arguments ?? raw.args ?? raw.request ?? raw.input ?? raw.parameters ?? nestedCall.arguments ?? nestedCall.args ?? nestedCall.input ?? nestedFunction.arguments ?? nestedFunction.parameters ?? "No request parameters returned",
+      response: raw.result ?? raw.response ?? raw.output ?? raw.tool_result ?? raw.content ?? nestedCall.result ?? nestedCall.output ?? "No response returned",
       status,
       open: Boolean(raw.open),
     };
@@ -426,7 +481,7 @@
         </button>
         <div class="catp-tool-body">
           <div class="catp-tool-pane">
-            <div class="catp-tool-label">Request</div>
+              <div class="catp-tool-label">Request parameters</div>
             <pre>${escapeHtml(pretty(tool.request))}</pre>
           </div>
           <div class="catp-tool-pane">
@@ -514,6 +569,11 @@
       return;
     }
 
+    const previousScrollTop = els.messages.scrollTop;
+    const distanceFromBottom = els.messages.scrollHeight - previousScrollTop - els.messages.clientHeight;
+    const shouldStickToBottom = state.forceScrollToBottom || distanceFromBottom <= 48;
+    state.forceScrollToBottom = false;
+
     els.messages.innerHTML = state.messages
       .map((message, index) => {
         if (message.role === "user") {
@@ -530,12 +590,13 @@
             <div class="catp-col">
               ${tools}
               ${message.content || typing ? `<div class="catp-bubble catp-markdown">${body}</div>` : ""}
+              ${message.content ? `<button type="button" class="catp-copy-btn" data-copy-message="${index}" title="Copy response">${ICONS.copy}<span>Copy</span></button>` : ""}
             </div>
           </div>
         `;
       })
       .join("");
-    els.messages.scrollTop = els.messages.scrollHeight;
+    els.messages.scrollTop = shouldStickToBottom ? els.messages.scrollHeight : previousScrollTop;
   }
 
   function render() {
@@ -547,7 +608,38 @@
     else renderChat();
   }
 
-  function onMessageClick(event) {
+  async function onMessageClick(event) {
+    const copyButton = event.target.closest("[data-copy-message], [data-copy-code], [data-copy-table]");
+    if (copyButton) {
+      let content = "";
+      if (copyButton.hasAttribute("data-copy-message")) {
+        content = state.messages[Number(copyButton.dataset.copyMessage)]?.content || "";
+      } else if (copyButton.hasAttribute("data-copy-code")) {
+        content = copyButton.closest(".catp-code-block")?.querySelector("pre code")?.textContent || "";
+      } else {
+        const table = copyButton.closest(".catp-table-wrap")?.querySelector("table");
+        content = table
+          ? [...table.rows]
+              .map((row) => [...row.cells].map((cell) => cell.textContent.trim()).join("\t"))
+              .join("\n")
+          : "";
+      }
+      const label = copyButton.querySelector("span");
+      if (!content || !label) return;
+
+      try {
+        await navigator.clipboard.writeText(content);
+        label.textContent = "Copied";
+      } catch (error) {
+        console.warn("Could not copy assistant response", error);
+        label.textContent = "Copy failed";
+      }
+      window.setTimeout(() => {
+        if (copyButton.isConnected) label.textContent = "Copy";
+      }, 1500);
+      return;
+    }
+
     const starter = event.target.closest("[data-starter]");
     if (starter) {
       submit(CONFIG.starters[Number(starter.dataset.starter)].prompt);
@@ -645,6 +737,7 @@
 
     state.messages.push({ role: "user", content: text });
     state.messages.push({ role: "agent", content: "", tools: [] });
+    state.forceScrollToBottom = true;
     persistActive();
     render();
     open();

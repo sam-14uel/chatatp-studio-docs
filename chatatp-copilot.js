@@ -61,7 +61,7 @@
   }
 
   const ICONS = {
-    sparkle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.4 5.2L18 9.6l-4.6 1.4L12 16l-1.4-4.99L6 9.6l4.6-1.4L12 3z"/><path d="M18.5 14.5l.6 2.2 2.2.6-2.2.6-.6 2.2-.6-2.2-2.2-.6 2.2-.6.6-2.2z"/></svg>`,
+    robot: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M9 13v2M15 13v2"/></svg>`,
     close: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
     plus: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`,
     send: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h12M13 6l6 6-6 6"/></svg>`,
@@ -77,7 +77,12 @@
     view: "chat",
     busy: false,
     typing: false,
+    loadingConversation: false,
+    conversationLoadToken: 0,
     client: null,
+    marked: null,
+    domPurify: null,
+    markdownPromise: null,
     visitorId: resolveDocsVisitorIdentity(),
     conversationId: Number(localStorage.getItem(ACTIVE_KEY) || 0) || null,
     messages: [],
@@ -179,20 +184,37 @@
   }
 
   function renderMarkdown(text) {
-    const escaped = escapeHtml(text || "");
-    const withCode = escaped.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, _lang, body) => {
-      return `<pre><code>${body}</code></pre>`;
-    });
-    const withInline = withCode.replace(/`([^`]+)`/g, "<code>$1</code>");
-    const withBold = withInline.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-    const withLinks = withBold.replace(
-      /\[([^\]]+)\]\((https?:[^)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noreferrer">$1</a>'
-    );
-    return withLinks
-      .split(/\n{2,}/)
-      .map((block) => `<p>${block.replace(/\n/g, "<br>")}</p>`)
-      .join("");
+    const source = String(text || "");
+    if (!state.marked || !state.domPurify) {
+      return source
+        .split(/\n{2,}/)
+        .map((block) => `<p>${escapeHtml(block).replace(/\n/g, "<br>")}</p>`)
+        .join("");
+    }
+
+    const html = state.marked.parse(source, { gfm: true, breaks: true });
+    return state.domPurify.sanitize(html, { USE_PROFILES: { html: true } });
+  }
+
+  function ensureMarkdown() {
+    if (state.marked && state.domPurify) return Promise.resolve();
+    if (!state.markdownPromise) {
+      state.markdownPromise = Promise.all([
+        import("https://esm.sh/marked@15.0.12?bundle"),
+        import("https://esm.sh/dompurify@3.2.6?bundle"),
+      ])
+        .then(([markedModule, purifyModule]) => {
+          state.marked = markedModule.marked || markedModule.default;
+          state.domPurify = purifyModule.default || purifyModule;
+        })
+        .catch((error) => {
+          console.warn("Could not load Markdown formatting", error);
+        })
+        .finally(() => {
+          state.markdownPromise = null;
+        });
+    }
+    return state.markdownPromise;
   }
 
   function statusIcon(status) {
@@ -226,7 +248,7 @@
     root.innerHTML = `
       <div class="catp-float-wrap" id="catp-float">
         <div class="catp-float">
-          <span class="catp-float-icon">${ICONS.sparkle}</span>
+          <span class="catp-float-icon">${ICONS.robot}</span>
           <input class="catp-float-input" id="catp-float-input" placeholder="${escapeHtml(
             CONFIG.placeholder
           )}" autocomplete="off" />
@@ -317,7 +339,7 @@
     button.type = "button";
     button.id = "catp-ask-btn";
     button.className = "catp-ask-btn";
-    button.innerHTML = `${ICONS.sparkle}<span class="catp-ask-btn-label">Ask Copilot</span><span class="catp-kbd">⌘I</span>`;
+    button.innerHTML = `${ICONS.robot}<span class="catp-ask-btn-label">Ask Copilot</span><span class="catp-kbd">⌘I</span>`;
     button.addEventListener("click", () => (state.open ? close() : open()));
     (search.parentElement || search).appendChild(button);
   }
@@ -358,6 +380,8 @@
 
   async function resetChat() {
     if (state.busy) return;
+    state.conversationLoadToken += 1;
+    state.loadingConversation = false;
     state.conversationId = null;
     state.messages = [];
     state.view = "chat";
@@ -457,10 +481,21 @@
   }
 
   function renderChat() {
+    if (state.loadingConversation) {
+      els.messages.innerHTML = `
+        <div class="catp-empty catp-conversation-loading" role="status" aria-live="polite">
+          <div class="catp-empty-mark">${ICONS.spin}</div>
+          <h3>Loading conversation</h3>
+          <p>Fetching messages.</p>
+        </div>
+      `;
+      return;
+    }
+
     if (!state.messages.length) {
       els.messages.innerHTML = `
         <div class="catp-empty">
-          <div class="catp-empty-mark">${ICONS.sparkle}</div>
+          <div class="catp-empty-mark">${ICONS.robot}</div>
           <h3>${escapeHtml(CONFIG.emptyHeading)}</h3>
           <p>${escapeHtml(CONFIG.emptySubheading)}</p>
           <div class="catp-starters">
@@ -491,10 +526,10 @@
           : renderMarkdown(message.content);
         return `
           <div class="catp-row agent">
-            <div class="catp-avatar">${ICONS.sparkle}</div>
+            <div class="catp-avatar">${ICONS.robot}</div>
             <div class="catp-col">
               ${tools}
-              ${message.content || typing ? `<div class="catp-bubble">${body}</div>` : ""}
+              ${message.content || typing ? `<div class="catp-bubble catp-markdown">${body}</div>` : ""}
             </div>
           </div>
         `;
@@ -506,6 +541,8 @@
   function render() {
     if (!els.messages) return;
     els.composer.classList.toggle("catp-hidden", state.view === "history");
+    els.input.disabled = state.loadingConversation;
+    els.send.disabled = state.loadingConversation || state.busy || !els.input.value.trim();
     if (state.view === "history") renderHistory();
     else renderChat();
   }
@@ -535,8 +572,10 @@
   async function openThread(threadId) {
     const id = Number(threadId);
     if (!id || state.busy) return;
+    const loadToken = ++state.conversationLoadToken;
     state.conversationId = id;
     state.view = "chat";
+    state.loadingConversation = true;
     persistActive();
     state.messages = [];
     render();
@@ -544,14 +583,19 @@
       const client = await ensureClient();
       const page = await client.messages.list(id);
       const rows = await pageToArray(page);
+      if (loadToken !== state.conversationLoadToken) return;
       state.messages = (rows || []).map((row) => ({
         role: row.sender === "user" || row.role === "user" ? "user" : "agent",
         content: row.content || "",
         tools: Array.isArray(row.tool_calls) ? row.tool_calls.map((tool) => normalizeTool(tool, "success")) : [],
       }));
-      render();
     } catch (error) {
       console.warn("Could not load conversation", error);
+    } finally {
+      if (loadToken === state.conversationLoadToken) {
+        state.loadingConversation = false;
+        render();
+      }
     }
   }
 
@@ -590,7 +634,7 @@
 
   async function submit(raw) {
     const text = String(raw || "").trim();
-    if (!text || state.busy) return;
+    if (!text || state.busy || state.loadingConversation) return;
 
     state.view = "chat";
     state.busy = true;
@@ -688,6 +732,9 @@
   function boot() {
     mount();
     injectAskButton();
+    ensureMarkdown().then(() => {
+      if (state.messages.some((message) => message.role === "agent" && message.content)) render();
+    });
     loadSessions().then(() => {
       if (state.conversationId) openThread(state.conversationId);
     });

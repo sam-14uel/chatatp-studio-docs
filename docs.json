@@ -8,10 +8,7 @@
     "dark": "#4338CA"
   },
   "favicon": "/favicon.ico",
-  "logo": {
-    "light": "/logo/light.jpeg",
-    "dark": "/logo/dark.jpeg"
-  },
+  "logo": "/logo/chatatp-studio.svg",
   "api": {
     "mdx": {
       "server": "https://chatatp-agent-builder-backend.onrender.com",

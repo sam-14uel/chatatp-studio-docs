@@ -754,20 +754,9 @@
 
     try {
       const client = await ensureClient();
-      if (state.conversationId) {
-        const result = await client.messages.send(state.conversationId, { content: text });
-        const last = currentAgent();
-        if (last) {
-          last.content = result.agent_message?.content || result.content || "";
-          const tools = result.agent_message?.tool_calls || result.tool_calls;
-          if (Array.isArray(tools)) {
-            last.tools = tools.map((tool) => normalizeTool(tool, "success"));
-          }
-        }
-        setTyping(false);
-        render();
-      } else {
-        const stream = client.chatStream({
+      const stream = state.conversationId
+        ? client.messages.stream(state.conversationId, { content: text })
+        : client.chatStream({
           agent_id: CONFIG.agentId,
           external_user_id: state.visitorId,
           user_display_name: resolveDocsDisplayName(),
@@ -781,38 +770,36 @@
           },
         });
 
-        for await (const event of stream) {
-          captureConversation(event);
-          if (event.type === "tool.execution.started") {
-            upsertTool(event.data || {}, "running");
-            render();
-          }
-          if (event.type === "tool.execution.completed") {
-            upsertTool(event.data || {}, event.data?.ok === false ? "failed" : "success");
-            render();
-          }
-          if (event.type === "agent.response.delta") {
-            const last = currentAgent();
-            if (last) last.content += extractDelta(event.data);
-            render();
-          }
-          if (event.type === "agent.response.completed") {
-            const last = currentAgent();
-            const finalText =
-              extractDelta(event.data) || event.data?.agent_message?.content || last?.content;
-            if (last) last.content = finalText || last.content;
-            if (Array.isArray(event.data?.tool_calls)) {
-              event.data.tool_calls.forEach((tool) => upsertTool(tool, "success"));
-            }
-            setTyping(false);
-            persistActive();
-            render();
-          }
-          if (event.type === "error") {
-            throw new Error(extractDelta(event.data) || event.data?.message || "The agent could not answer.");
-          }
+      for await (const event of stream) {
+        captureConversation(event);
+        if (event.type === "tool.execution.started") {
+          upsertTool(event.data || {}, "running");
+          render();
         }
-
+        if (event.type === "tool.execution.completed") {
+          upsertTool(event.data || {}, event.data?.ok === false ? "failed" : "success");
+          render();
+        }
+        if (event.type === "agent.response.delta") {
+          const last = currentAgent();
+          if (last) last.content += extractDelta(event.data);
+          render();
+        }
+        if (event.type === "agent.response.completed") {
+          const last = currentAgent();
+          const finalText =
+            extractDelta(event.data) || event.data?.agent_message?.content || last?.content;
+          if (last) last.content = finalText || last.content;
+          if (Array.isArray(event.data?.tool_calls)) {
+            event.data.tool_calls.forEach((tool) => upsertTool(tool, "success"));
+          }
+          setTyping(false);
+          persistActive();
+          render();
+        }
+        if (event.type === "error") {
+          throw new Error(extractDelta(event.data) || event.data?.message || "The agent could not answer.");
+        }
       }
 
       const last = currentAgent();

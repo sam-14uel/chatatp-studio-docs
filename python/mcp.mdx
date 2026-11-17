@@ -25,12 +25,11 @@ connection = await client.mcp.connections.create(
 
 Supported credential fields are `api_key`, `bearer_token`, `basic_username`, and `basic_password`. `username` and `password` are accepted aliases for Basic authentication. Servers with `auth_type="none"` need no credentials.
 
-For OAuth servers, create the connection and redirect the user's browser to the returned authorization URL:
+For OAuth servers, initiate authorization with the server ID and redirect the user's browser to the returned authorization URL. The callback creates the connection after authorization succeeds:
 
 ```python
-connection = await client.mcp.connections.create(oauth_server.id, label="calendar-oauth")
-flow = await client.mcp.connections.oauth_initiate(connection.id)
+flow = await client.mcp.oauth_initiate(oauth_server.id)
 print(flow.authorization_url)
 ```
 
-After the user completes authorization, the existing Studio OAuth callback saves tokens to that connection. Connection responses expose credential presence and a summary only; secret values are never returned.
+After the user completes authorization, retrieve the newly created connection from `client.mcp.connections.list()`. Connection responses expose credential presence and a summary only; secret values are never returned.

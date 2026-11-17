@@ -1,23 +1,25 @@
 ---
-title: "Initiate MCP connection OAuth"
-description: "Start OAuth authorization for an MCP connection"
-api: "POST /v1/mcp/connections/{connection_id}/oauth/initiate/"
+title: "Initiate MCP server OAuth"
+description: "Start OAuth authorization for an MCP server and create its connection after callback"
+api: "POST /v1/mcp/oauth/initiate/"
 ---
 
-Requires the `mcp:read` and `mcp:write` scopes. The connection must use `oauth` authentication and its server must have a complete OAuth configuration. Open the returned `authorization_url` in a browser to continue.
+Requires the `mcp:read` and `mcp:write` scopes. The server must be accessible to the API key, use `oauth` authentication, and have a complete OAuth configuration. Open the returned `authorization_url` in a browser to continue. The OAuth callback creates the account or team connection after authorization succeeds.
 
-<ParamField path="connection_id" type="integer" required>OAuth MCP connection ID.</ParamField>
+<ParamField body="server_id" type="integer" required>MCP server ID.</ParamField>
+<ParamField body="redirect_uri" type="string">Optional OAuth callback URI. Defaults to the URI configured for the server.</ParamField>
 
-<ResponseField name="connection_id" type="integer" required>Connection being authorized.</ResponseField>
-<ResponseField name="authorization_url" type="string" required>URL to open to authorize the connection.</ResponseField>
+<ResponseField name="authorization_url" type="string" required>URL to open to authorize the server connection.</ResponseField>
 <ResponseField name="redirect_uri" type="string" required>Configured OAuth callback URI.</ResponseField>
 <ResponseField name="state" type="string" required>Opaque OAuth state token. Keep it private.</ResponseField>
 <ResponseField name="expires_at" type="string" required>Expiration time for this authorization flow.</ResponseField>
 
 <RequestExample>
 ```bash cURL
-curl -X POST https://chatatp-agent-builder-backend.onrender.com/v1/mcp/connections/42/oauth/initiate/ \
-  -H "Authorization: Bearer $CHATATP_API_KEY"
+curl -X POST https://chatatp-agent-builder-backend.onrender.com/v1/mcp/oauth/initiate/ \
+  -H "Authorization: Bearer $CHATATP_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "server_id": 12 }'
 ```
 </RequestExample>
 
@@ -25,12 +27,12 @@ curl -X POST https://chatatp-agent-builder-backend.onrender.com/v1/mcp/connectio
 
 <CodeGroup>
 ```typescript TypeScript
-const flow = await client.mcp.connections.oauthInitiate(42);
+const flow = await client.mcp.oauthInitiate(12);
 window.location.assign(flow.authorization_url);
 ```
 
 ```python Python
-flow = await client.mcp.connections.oauth_initiate(42)
+flow = await client.mcp.oauth_initiate(12)
 print(flow.authorization_url)
 ```
 </CodeGroup>

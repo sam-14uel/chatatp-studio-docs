@@ -22,15 +22,11 @@ const connection = await client.mcp.connections.create({
 
 Supported credential fields are `api_key`, `bearer_token`, `basic_username`, and `basic_password`. `username` and `password` are accepted aliases for Basic authentication. Servers with `auth_type: "none"` need no credentials.
 
-For OAuth servers, create the connection first, then open the authorization URL:
+For OAuth servers, initiate authorization with the server ID. The callback creates the connection after the user authorizes it:
 
 ```ts
-const connection = await client.mcp.connections.create({
-  server_id: oauthServer.id,
-  label: "calendar-oauth",
-});
-const flow = await client.mcp.connections.oauthInitiate(connection.id);
+const flow = await client.mcp.oauthInitiate(oauthServer.id);
 window.location.assign(flow.authorization_url);
 ```
 
-After the user completes authorization, the existing Studio OAuth callback saves tokens to that connection. Connection responses expose credential presence and a summary only; secret values are never returned.
+After the user completes authorization, retrieve the newly created connection from `client.mcp.connections.list()`. Connection responses expose credential presence and a summary only; secret values are never returned.

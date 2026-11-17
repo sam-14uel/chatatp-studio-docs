@@ -15,7 +15,7 @@ Requires the `mcp:read` and `mcp:write` scopes. The selected server must be publ
 <ParamField body="credentials.basic_username" type="string">Required for `basic` authentication. `username` is also accepted.</ParamField>
 <ParamField body="credentials.basic_password" type="string">Required for `basic` authentication. `password` is also accepted.</ParamField>
 
-For `none` and `oauth` authentication, no credentials are needed when creating the connection. Complete OAuth with [Initiate OAuth](/api-reference/mcp/initiate-oauth).
+For `none` authentication, no credentials are needed. For `oauth`, use [Initiate OAuth](/api-reference/mcp/initiate-oauth) with the server ID; the callback creates the connection after authorization succeeds.
 
 <ResponseField name="id" type="integer" required>Connection ID.</ResponseField>
 <ResponseField name="server" type="integer" required>Connected MCP server ID.</ResponseField>

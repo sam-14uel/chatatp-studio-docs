@@ -1,0 +1,36 @@
+---
+title: MCP servers and connections
+description: Discover MCP servers and manage account or team connections from the Python SDK.
+---
+
+The MCP resources use the Developer API scopes `mcp:read` and `mcp:write`. Server lists include public servers and servers owned by the API key's account or team. Connection lists include only connections owned by that account or team.
+
+```python
+import os
+
+async with ChatATPClient("chatatp_sk_...") as client:
+    servers = await client.mcp.servers.list()
+    server = await client.mcp.servers.retrieve(12)
+```
+
+Create a connection with the credentials required by the server's `auth_type`:
+
+```python
+connection = await client.mcp.connections.create(
+    server.id,
+    label="calendar",
+    credentials={"api_key": os.environ["CALENDAR_API_KEY"]},
+)
+```
+
+Supported credential fields are `api_key`, `bearer_token`, `basic_username`, and `basic_password`. `username` and `password` are accepted aliases for Basic authentication. Servers with `auth_type="none"` need no credentials.
+
+For OAuth servers, create the connection and redirect the user's browser to the returned authorization URL:
+
+```python
+connection = await client.mcp.connections.create(oauth_server.id, label="calendar-oauth")
+flow = await client.mcp.connections.oauth_initiate(connection.id)
+print(flow.authorization_url)
+```
+
+After the user completes authorization, the existing Studio OAuth callback saves tokens to that connection. Connection responses expose credential presence and a summary only; secret values are never returned.

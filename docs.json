@@ -71,6 +71,7 @@
               "js/conversations",
               "js/messages",
               "js/knowledge-bases",
+              "js/mcp",
               "js/memory",
               "js/automations",
               "js/schedules",
@@ -99,6 +100,7 @@
               "python/conversations",
               "python/messages",
               "python/knowledge-bases",
+              "python/mcp",
               "python/memory",
               "python/automations",
               "python/schedules",
@@ -150,6 +152,12 @@
               "api-reference/messages/list-messages",
               "api-reference/messages/send-message",
               "api-reference/messages/stream-message"
+            ]
+          },
+          {
+            "group": "MCP",
+            "pages": [
+              "api-reference/mcp/overview"
             ]
           },
           {

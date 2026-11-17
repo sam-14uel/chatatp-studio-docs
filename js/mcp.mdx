@@ -1,0 +1,36 @@
+---
+title: MCP servers and connections
+description: Discover MCP servers and manage account or team connections from the JavaScript SDK.
+---
+
+The MCP resources use the Developer API scopes `mcp:read` and `mcp:write`. Server lists include public servers and servers owned by the API key's account or team. Connection lists include only connections owned by that account or team.
+
+```ts
+const servers = await client.mcp.servers.list();
+const server = await client.mcp.servers.retrieve(12);
+```
+
+Create a connection with the credentials required by the server's `auth_type`:
+
+```ts
+const connection = await client.mcp.connections.create({
+  server_id: server.id,
+  label: "calendar",
+  credentials: { api_key: process.env.CALENDAR_API_KEY! },
+});
+```
+
+Supported credential fields are `api_key`, `bearer_token`, `basic_username`, and `basic_password`. `username` and `password` are accepted aliases for Basic authentication. Servers with `auth_type: "none"` need no credentials.
+
+For OAuth servers, create the connection first, then open the authorization URL:
+
+```ts
+const connection = await client.mcp.connections.create({
+  server_id: oauthServer.id,
+  label: "calendar-oauth",
+});
+const flow = await client.mcp.connections.oauthInitiate(connection.id);
+window.location.assign(flow.authorization_url);
+```
+
+After the user completes authorization, the existing Studio OAuth callback saves tokens to that connection. Connection responses expose credential presence and a summary only; secret values are never returned.

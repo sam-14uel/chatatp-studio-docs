@@ -1,0 +1,59 @@
+---
+title: "Create an MCP connection"
+description: "Connect an accessible MCP server to your account or team"
+api: "POST /v1/mcp/connections/"
+---
+
+Requires the `mcp:read` and `mcp:write` scopes. The selected server must be public, prebuilt, or owned by the API key's account or team. Supply credentials matching the server's `auth_type`; secret values are write-only.
+
+<ParamField body="server_id" type="integer" required>MCP server ID.</ParamField>
+<ParamField body="label" type="string">Optional label for this connection.</ParamField>
+<ParamField body="enabled" type="boolean">Whether to enable the connection. Defaults to `true`.</ParamField>
+<ParamField body="credentials" type="object">Authentication credentials and optional `extra_headers` or `env_overrides` maps.</ParamField>
+<ParamField body="credentials.api_key" type="string">Required for `api_key` authentication.</ParamField>
+<ParamField body="credentials.bearer_token" type="string">Required for `bearer` authentication. `token` is also accepted.</ParamField>
+<ParamField body="credentials.basic_username" type="string">Required for `basic` authentication. `username` is also accepted.</ParamField>
+<ParamField body="credentials.basic_password" type="string">Required for `basic` authentication. `password` is also accepted.</ParamField>
+
+For `none` and `oauth` authentication, no credentials are needed when creating the connection. Complete OAuth with [Initiate OAuth](/api-reference/mcp/initiate-oauth).
+
+<ResponseField name="id" type="integer" required>Connection ID.</ResponseField>
+<ResponseField name="server" type="integer" required>Connected MCP server ID.</ResponseField>
+<ResponseField name="server_slug" type="string" required>Connected server slug.</ResponseField>
+<ResponseField name="server_name" type="string" required>Connected server name.</ResponseField>
+<ResponseField name="auth_type" type="string" required>Authentication type used by the server.</ResponseField>
+<ResponseField name="label" type="string" required>Connection label.</ResponseField>
+<ResponseField name="enabled" type="boolean" required>Whether the connection is enabled.</ResponseField>
+<ResponseField name="has_credentials" type="boolean" required>Whether credentials are configured.</ResponseField>
+<ResponseField name="credential_summary" type="string" required>Non-secret summary. Credential values are never returned.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://chatatp-agent-builder-backend.onrender.com/v1/mcp/connections/ \
+  -H "Authorization: Bearer $CHATATP_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "server_id": 12,
+    "label": "calendar",
+    "credentials": { "api_key": "YOUR_MCP_SERVER_API_KEY" }
+  }'
+```
+</RequestExample>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const connection = await client.mcp.connections.create({
+  server_id: 12,
+  label: "calendar",
+  credentials: { api_key: process.env.MCP_SERVER_API_KEY! },
+});
+```
+
+```python Python
+connection = await client.mcp.connections.create(
+    12, label="calendar", credentials={"api_key": os.environ["MCP_SERVER_API_KEY"]}
+)
+```
+</CodeGroup>

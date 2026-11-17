@@ -1,0 +1,44 @@
+---
+title: "Update an MCP connection"
+description: "Change a connection's label, enabled state, or credentials"
+api: "PATCH /v1/mcp/connections/{connection_id}/"
+---
+
+Requires the `mcp:read` and `mcp:write` scopes. Only connections owned by the API key's account or team are accessible. Omitted fields remain unchanged.
+
+<ParamField path="connection_id" type="integer" required>Connection ID.</ParamField>
+<ParamField body="label" type="string">New connection label.</ParamField>
+<ParamField body="enabled" type="boolean">Enable or disable the connection.</ParamField>
+<ParamField body="credentials" type="object">Replace or update credentials for the server's authentication type. May include `extra_headers` or `env_overrides`.</ParamField>
+
+Credential field names follow the server's `auth_type`: `api_key`, `bearer_token` (or `token`), and `basic_username` plus `basic_password` (or `username` and `password`). OAuth credentials must be changed through the OAuth flow. Credential values are never returned.
+
+<ResponseField name="id" type="integer" required>Connection ID.</ResponseField>
+<ResponseField name="label" type="string" required>Connection label.</ResponseField>
+<ResponseField name="enabled" type="boolean" required>Whether the connection is enabled.</ResponseField>
+<ResponseField name="has_credentials" type="boolean" required>Whether credentials are configured.</ResponseField>
+<ResponseField name="credential_summary" type="string" required>Non-secret summary of the configured credentials.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X PATCH https://chatatp-agent-builder-backend.onrender.com/v1/mcp/connections/42/ \
+  -H "Authorization: Bearer $CHATATP_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "enabled": false, "label": "calendar-disabled" }'
+```
+</RequestExample>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const connection = await client.mcp.connections.update(42, {
+  enabled: false,
+  label: "calendar-disabled",
+});
+```
+
+```python Python
+connection = await client.mcp.connections.update(42, enabled=False, label="calendar-disabled")
+```
+</CodeGroup>

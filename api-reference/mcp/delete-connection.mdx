@@ -1,0 +1,30 @@
+---
+title: "Delete an MCP connection"
+description: "Permanently remove an account or team MCP connection"
+api: "DELETE /v1/mcp/connections/{connection_id}/"
+---
+
+Requires the `mcp:read` and `mcp:write` scopes. This removes the connection and its stored credentials; it does not delete the MCP server.
+
+<ParamField path="connection_id" type="integer" required>Connection ID.</ParamField>
+
+Returns `204 No Content` when the connection is deleted.
+
+<RequestExample>
+```bash cURL
+curl -X DELETE https://chatatp-agent-builder-backend.onrender.com/v1/mcp/connections/42/ \
+  -H "Authorization: Bearer $CHATATP_API_KEY"
+```
+</RequestExample>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+await client.mcp.connections.delete(42);
+```
+
+```python Python
+await client.mcp.connections.delete(42)
+```
+</CodeGroup>

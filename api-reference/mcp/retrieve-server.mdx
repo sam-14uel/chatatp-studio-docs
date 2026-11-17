@@ -1,0 +1,35 @@
+---
+title: "Retrieve an MCP server"
+description: "Retrieve an accessible MCP server by ID"
+api: "GET /v1/mcp/servers/{server_id}/"
+---
+
+Returns one public, prebuilt, account-owned, or team-owned server. Requires the `mcp:read` scope.
+
+<ParamField path="server_id" type="integer" required>Server ID.</ParamField>
+
+<ResponseField name="id" type="integer" required>Server ID.</ResponseField>
+<ResponseField name="slug" type="string" required>Stable server slug.</ResponseField>
+<ResponseField name="name" type="string" required>Server display name.</ResponseField>
+<ResponseField name="transport_type" type="string" required>`http`, `sse`, or `stdio`.</ResponseField>
+<ResponseField name="auth_type" type="string" required>Authentication type required for a connection.</ResponseField>
+<ResponseField name="env_var_names" type="string[]">Configured environment variable names only.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl https://chatatp-agent-builder-backend.onrender.com/v1/mcp/servers/12/ \
+  -H "Authorization: Bearer $CHATATP_API_KEY"
+```
+</RequestExample>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const server = await client.mcp.servers.retrieve(12);
+```
+
+```python Python
+server = await client.mcp.servers.retrieve(12)
+```
+</CodeGroup>

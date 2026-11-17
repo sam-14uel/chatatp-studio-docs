@@ -1,0 +1,40 @@
+---
+title: "Retrieve an MCP connection"
+description: "Retrieve an account or team MCP connection by ID"
+api: "GET /v1/mcp/connections/{connection_id}/"
+---
+
+Requires the `mcp:read` scope. Only connections owned by the API key's account or team are accessible. Credential values are never returned.
+
+<ParamField path="connection_id" type="integer" required>Connection ID.</ParamField>
+
+<ResponseField name="id" type="integer" required>Connection ID.</ResponseField>
+<ResponseField name="server" type="integer" required>Connected MCP server ID.</ResponseField>
+<ResponseField name="server_slug" type="string" required>Connected server slug.</ResponseField>
+<ResponseField name="server_name" type="string" required>Connected server name.</ResponseField>
+<ResponseField name="auth_type" type="string" required>`none`, `api_key`, `bearer`, `basic`, or `oauth`.</ResponseField>
+<ResponseField name="label" type="string" required>Connection label.</ResponseField>
+<ResponseField name="enabled" type="boolean" required>Whether the connection is enabled.</ResponseField>
+<ResponseField name="has_credentials" type="boolean" required>Whether credentials are configured.</ResponseField>
+<ResponseField name="credential_summary" type="string" required>Non-secret summary of the configured credentials.</ResponseField>
+<ResponseField name="last_connected" type="string | null">Last successful connection time.</ResponseField>
+<ResponseField name="last_error" type="string" required>Generic error indicator; sensitive error details are not returned.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl https://chatatp-agent-builder-backend.onrender.com/v1/mcp/connections/42/ \
+  -H "Authorization: Bearer $CHATATP_API_KEY"
+```
+</RequestExample>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const connection = await client.mcp.connections.retrieve(42);
+```
+
+```python Python
+connection = await client.mcp.connections.retrieve(42)
+```
+</CodeGroup>

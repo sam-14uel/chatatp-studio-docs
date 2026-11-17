@@ -1,0 +1,41 @@
+---
+title: "List MCP connections"
+description: "List the MCP connections owned by your account or team"
+api: "GET /v1/mcp/connections/"
+---
+
+Requires the `mcp:read` scope. The response includes only connections owned by the API key's account or team. Credential values are never returned.
+
+<ResponseField name="data" type="MCPConnection[]" required>
+  MCP connections accessible to the API key.
+</ResponseField>
+<ResponseField name="data[].id" type="integer" required>Connection ID.</ResponseField>
+<ResponseField name="data[].server" type="integer" required>Connected MCP server ID.</ResponseField>
+<ResponseField name="data[].server_slug" type="string" required>Connected server slug.</ResponseField>
+<ResponseField name="data[].server_name" type="string" required>Connected server name.</ResponseField>
+<ResponseField name="data[].auth_type" type="string" required>`none`, `api_key`, `bearer`, `basic`, or `oauth`.</ResponseField>
+<ResponseField name="data[].label" type="string" required>Connection label.</ResponseField>
+<ResponseField name="data[].enabled" type="boolean" required>Whether the connection is enabled.</ResponseField>
+<ResponseField name="data[].has_credentials" type="boolean" required>Whether credentials are configured.</ResponseField>
+<ResponseField name="data[].credential_summary" type="string" required>Non-secret summary of the configured credentials.</ResponseField>
+<ResponseField name="data[].last_connected" type="string | null">Last successful connection time.</ResponseField>
+<ResponseField name="data[].last_error" type="string" required>Generic error indicator; sensitive error details are not returned.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl https://chatatp-agent-builder-backend.onrender.com/v1/mcp/connections/ \
+  -H "Authorization: Bearer $CHATATP_API_KEY"
+```
+</RequestExample>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const connections = await client.mcp.connections.list();
+```
+
+```python Python
+connections = await client.mcp.connections.list()
+```
+</CodeGroup>

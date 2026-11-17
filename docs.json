@@ -157,7 +157,14 @@
           {
             "group": "MCP",
             "pages": [
-              "api-reference/mcp/overview"
+              "api-reference/mcp/list-servers",
+              "api-reference/mcp/retrieve-server",
+              "api-reference/mcp/list-connections",
+              "api-reference/mcp/create-connection",
+              "api-reference/mcp/retrieve-connection",
+              "api-reference/mcp/update-connection",
+              "api-reference/mcp/delete-connection",
+              "api-reference/mcp/initiate-oauth"
             ]
           },
           {

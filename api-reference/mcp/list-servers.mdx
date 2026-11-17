@@ -1,0 +1,39 @@
+---
+title: "List MCP servers"
+description: "List public and workspace-owned MCP servers"
+api: "GET /v1/mcp/servers/"
+---
+
+Returns public and prebuilt servers plus servers owned by the API key's account or team. Requires the `mcp:read` scope.
+
+<ResponseField name="data" type="MCPServer[]" required>
+  Accessible MCP servers. OAuth client secrets and server environment values are never returned.
+</ResponseField>
+
+<ResponseField name="data[].id" type="integer" required>Server ID.</ResponseField>
+<ResponseField name="data[].slug" type="string" required>Stable server slug.</ResponseField>
+<ResponseField name="data[].name" type="string" required>Server display name.</ResponseField>
+<ResponseField name="data[].transport_type" type="string" required>`http`, `sse`, or `stdio`.</ResponseField>
+<ResponseField name="data[].auth_type" type="string" required>`none`, `api_key`, `bearer`, `basic`, or `oauth`.</ResponseField>
+<ResponseField name="data[].endpoint" type="string">HTTP/SSE endpoint. Empty for STDIO servers.</ResponseField>
+<ResponseField name="data[].command" type="string">STDIO command, if applicable.</ResponseField>
+<ResponseField name="data[].env_var_names" type="string[]">Names of configured server environment variables; values are not returned.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl https://chatatp-agent-builder-backend.onrender.com/v1/mcp/servers/ \
+  -H "Authorization: Bearer $CHATATP_API_KEY"
+```
+</RequestExample>
+
+## SDK
+
+<CodeGroup>
+```typescript TypeScript
+const servers = await client.mcp.servers.list();
+```
+
+```python Python
+servers = await client.mcp.servers.list()
+```
+</CodeGroup>
